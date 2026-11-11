@@ -31,6 +31,6 @@ description: Add, change or remove a risk factor in the PolicyQuote knowledge ba
    - minor: changed `points` or `condition`, or an added factor.
    - major: a removed factor, or a change to bands, `basePremium` or `coverageLoadFactor`.
 
-6. **Verify** in `backend/`: run `npm run kb:validate`, `npm run typecheck` and `npm test`, and show the output.
+6. **Verify** in `backend/`: run `npm run kb:validate`, `npm run typecheck` and `npm test`, and show the output. Once the tests pass, run `npm run kb:impact` to preview the change on the synthetic customer book (committed KB vs your working copy).
 
-7. **Report:** the KB diff, the tests added, the command results, and one example input I can type into the UI to see the factor apply.
+7. **Report:** the KB diff, the tests added, the command results, the `kb:impact` summary (band moves and premium change), and one example input I can type into the UI to see the factor apply.

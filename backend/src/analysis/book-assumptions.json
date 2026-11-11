@@ -1,0 +1,37 @@
+{
+  "description": "Distribution assumptions for the synthetic customer book used by `npm run kb:impact`. Made-up, but shaped like a UK home-insurance book. Weights are relative (they don't need to sum to 1).",
+  "ageBands": [
+    { "min": 18, "max": 24, "weight": 8 },
+    { "min": 25, "max": 29, "weight": 8 },
+    { "min": 30, "max": 65, "weight": 70 },
+    { "min": 66, "max": 75, "weight": 9 },
+    { "min": 76, "max": 95, "weight": 5 }
+  ],
+  "propertyTypes": [
+    { "value": "House", "weight": 55 },
+    { "value": "Flat", "weight": 30 },
+    { "value": "Bungalow", "weight": 15 }
+  ],
+  "propertyValue": {
+    "median": 300000,
+    "logSpread": 0.45,
+    "min": 60000,
+    "max": 5000000,
+    "roundTo": 5000
+  },
+  "previousClaims": [
+    { "value": 0, "weight": 150 },
+    { "value": 1, "weight": 26 },
+    { "value": 2, "weight": 14 },
+    { "value": 3, "weight": 6 },
+    { "value": 4, "weight": 3 },
+    { "value": 5, "weight": 1 }
+  ],
+  "postcodeDistricts": [
+    "SW1A", "SW3", "E1", "N1", "W2", "SE10",
+    "M1", "M20", "LS6", "LS1", "B1", "B15",
+    "BS1", "BS8", "CF10", "NE1", "G1", "EH1",
+    "NG1", "S1", "L1", "OX1", "CB1", "RG1",
+    "EX1", "EX4", "PL1", "PL4"
+  ]
+}

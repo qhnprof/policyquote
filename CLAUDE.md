@@ -22,6 +22,7 @@ Home-insurance quoting app. An Angular frontend calls a Node Lambda-style backen
 
 ## Commands
 - Backend (`cd backend`): `npm test` · `npm run typecheck` · `npm run kb:validate` · `npm start` (port 3000, restarts when the KB changes)
+- Impact preview (`cd backend`): `npm run kb:impact` compares the committed KB (git HEAD) with the working copy on a 1,000-customer synthetic book (seed 42); options `--base`, `--candidate`, `--size`, `--seed`, `--markdown`. Book assumptions: `backend/src/analysis/book-assumptions.json`.
 - Frontend (`cd frontend`): `npm start` (port 4200, proxies `/policy` to 3000) · `npm run build`
 
 ## Hard rules
@@ -37,7 +38,7 @@ Home-insurance quoting app. An Angular frontend calls a Node Lambda-style backen
 - Before engine, schema or cross-layer changes (backend + frontend), propose a short plan and wait for my approval. Routine KB edits that follow the `add-risk-factor` skill (KB entry + its test) don't need one.
 - A PostToolUse hook (`.claude/hooks/check-kb.js`) runs `kb:validate` and the backend tests after every edit to `kb/risk-kb.json`; if it reports a failure, fix or revert the KB before doing anything else.
 - Keep diffs small and focused. Don't refactor code outside the task.
-- Engine code is pure (no I/O). I/O lives only in `kb-loader.ts`, `handler.ts` and `server.ts`.
+- Engine code is pure (no I/O). I/O lives only in `kb-loader.ts`, `handler.ts`, `server.ts` and the CLIs (`validate-kb.ts`, `analysis/kb-impact.ts`, plus `loadBookAssumptions()` in `analysis/synthetic-book.ts`). `analysis/impact.ts` is pure.
 - If a requirement is ambiguous, state your assumption in your reply instead of guessing silently.
 - Finish every task with: files changed, commands run with results, and any assumptions.
 

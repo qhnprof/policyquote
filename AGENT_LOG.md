@@ -262,6 +262,22 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
 
 ---
 
+## Extra B — Impact preview (2026-11-11)
+- **Prompt:** Prompt B from the guide (plan first): `synthetic-book.ts` with `generateBook(size, seed)` and assumptions in `book-assumptions.json`; pure `compareKnowledgeBases(baseKb, candidateKb, book)` reusing `scoreQuote` (band moves, transition table, premium change in £ and %, top 5 movers, KB diff by factor id); `kb-impact.ts` CLI (`git show HEAD:kb/risk-kb.json` vs the working copy, 1,000 customers, seed 42, `--base/--candidate/--size/--seed/--markdown`, "No differences" when nothing changed); tests (same seed → same book, self-comparison → zero change, +15 EX/PL rule only affects EX/PL); script, CLAUDE.md and skill updates.
+- **Output:**
+  - The plan for B and C was proposed and approved ("go").
+  - Book: mulberry32 seeded PRNG plus Box–Muller, written inline (no dependency). Log-normal property values around the £300k median (spread 0.45, so about 2% are over £750k). Every customer goes through `quoteRequestSchema.parse`. The assumptions JSON is checked with a small Zod schema; postcodes include EX1, EX4, PL1, PL4.
+  - Impact: "up/down" uses each band's rank by `min` within its own KB, so renamed bands still compare. The KB diff also reports `otherChanged` (description/flags) and top-level `settingsChanged`. Movers are stably sorted by absolute £ change, so the report is reproducible.
+  - CLI: `util.parseArgs`; both KBs are validated with the KB schema and print readable issues if invalid; Markdown mode for CI.
+  - Additions: a note when rules changed but `version` wasn't bumped; singular "1 claim".
+  - A self-review grep found the book's claims weight `1.5` matching the step-07 "no KB numbers in src" grep (`1\.5`). It isn't a KB value, but I switched to whole-number weights with the same proportions so the panel's check stays clean.
+  - CLAUDE.md: the `kb:impact` command, and the I/O rule now names the CLIs and `loadBookAssumptions()`. Skill: verify runs `kb:impact` after the tests; the report includes its summary.
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified:** `npm run typecheck` clean; `npm test` → 127 passed (8 new). `npm run kb:impact` → `No differences`. With `previous_claims_low` 15 → 20 uncommitted → "Moved up a band: 41 (4.1%) · down 0 · average +£8.03 per customer, total +£8,028.00 (+1.96%) · STANDARD → ELEVATED 32, ELEVATED → HIGH_RISK 9", the version-bump note, top movers +£252. `git restore` → `No differences` again. The KB-number grep over `src` → none.
+
+---
+
 ## 01 — <short title> (<date, time>)
 - **Prompt:**
   > _paste the exact prompt_
