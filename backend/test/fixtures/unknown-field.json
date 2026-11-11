@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "version": "1.0.0",
+  "basePremium": 100,
+  "coverageLoadFactor": 1,
+  "riskBands": {
+    "LOW": {
+      "min": 0,
+      "max": 9,
+      "multiplier": 1,
+      "summary": "Low risk."
+    },
+    "HIGH": {
+      "min": 10,
+      "max": 99,
+      "multiplier": 2,
+      "summary": "High risk."
+    }
+  },
+  "factors": [
+    {
+      "id": "young",
+      "description": "Young",
+      "condition": {
+        "field": "age",
+        "operator": "lt",
+        "value": 25
+      },
+      "points": 10
+    },
+    {
+      "id": "claims",
+      "description": "Claims",
+      "condition": {
+        "field": "previousClaims",
+        "operator": "gte",
+        "value": 1
+      },
+      "points": 5,
+      "perOccurrence": true
+    },
+    {
+      "id": "flat_old",
+      "description": "x",
+      "condition": {
+        "all": [
+          {
+            "field": "propertyType",
+            "operator": "eq",
+            "value": "Flat"
+          },
+          {
+            "field": "buildYear",
+            "operator": "lt",
+            "value": 1900
+          }
+        ]
+      },
+      "points": 5
+    }
+  ]
+}

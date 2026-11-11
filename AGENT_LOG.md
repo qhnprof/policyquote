@@ -3,7 +3,7 @@
 **Agent:** Claude Code. **Project instructions:** [`CLAUDE.md`](CLAUDE.md). **Project skill:** [`.claude/skills/add-risk-factor/SKILL.md`](.claude/skills/add-risk-factor/SKILL.md).
 
 Each entry follows: prompt → output → what I accepted, changed or rejected → why → how I verified it.
-I started a fresh context (`/clear`) at the beginning of each step, so the agent worked from `CLAUDE.md` and the files rather than old chat history.
+Steps 04–08 ran in one continuous Claude Code session (no `/clear` between them), with the agent re-reading `CLAUDE.md` and the files at each step. Step 09 (the skill rehearsal) runs in a fresh context (`/clear`), because it tests that the skill works from the files alone.
 
 ---
 
@@ -41,6 +41,28 @@ I started a fresh context (`/clear`) at the beginning of each step, so the agent
 - **Accepted / changed / rejected:** _<fill in>_
 - **Why:** _<fill in>_
 - **Verified:** a throwaway Node script checked `schemaVersion` = 1, every band has `multiplier` and `summary`, 6 factors, and all six rows of the step-7 table (scores 0/25/30/60/45/115, premiums 360/360/540/540/540/792) → 6 PASS.
+
+---
+
+## 05 — Request schema, KB schema and loader (2026-11-11)
+- **Prompt:**
+  > Implement the request and KB contracts. Plan first; wait for my approval before writing code.
+  > 1. backend/src/validation/quote-request.schema.ts: Zod schema for the request: customerName: trimmed string, 1–100 chars; age: integer 18–120; propertyType: "House" | "Flat" | "Bungalow"; propertyValue: positive number, max 50,000,000; postcode: UK format, normalised to uppercase with a single space ("ex4 1aa" → "EX4 1AA"); previousClaims: integer 0–20. Export the inferred QuoteRequest type and the tuple of field names.
+  > 2. backend/src/kb/kb.schema.ts: Zod schema matching kb/risk-kb.json and kb/README.md. Leaf conditions are a discriminated union on "operator", so each operator requires exactly its keys. Conditions are recursive (all / any / not). "field" must be one of the request field names (derive it from the request schema, don't retype the list). Cross-checks with superRefine: unique factor ids; bands start at 0 with no gaps or overlaps; perOccurrence only on leaf conditions; schemaVersion must be a supported version (only 1 for now). Export inferred types: KnowledgeBase, Factor, Condition, LeafCondition, RiskBand.
+  > 3. backend/src/kb/kb-loader.ts: loadKnowledgeBase() reads the file at process.env.KB_PATH (default: ../kb/risk-kb.json relative to the backend folder), validates it, caches it per process like a Lambda cold start, and throws an error listing every validation issue. Also export resetKnowledgeBaseCache() for tests.
+  > 4. backend/src/kb/validate-kb.ts: CLI for `npm run kb:validate`. Print "KB v<version> valid (<n> factors)" or the issues, and exit with code 1 on failure.
+  > 5. Tests (test/kb.schema.test.ts, test/quote-request.schema.test.ts): the real KB passes; KBs in test/fixtures/ with a duplicate id, an unknown operator, an unknown field, overlapping bands and perOccurrence on a compound condition each fail with a clear message; postcode normalisation; out-of-range age is rejected.
+  > Then run npm run typecheck, npm test and npm run kb:validate.
+- **Output:**
+  - Plan for steps 05–08 proposed and approved ("go") before any code was written.
+  - A spike first proved the toolchain (ts-jest on TS 6.0.3) and that Zod 4 getter recursion infers `Condition` with no hand-written type. It also showed that a bad operator produced an opaque "Invalid input" union error listing every branch.
+  - Fix: `formatKbIssues` picks the relevant `conditionSchema` branch from the input's key (`operator` / `all` / `any` / `not`) and descends into it; the leaf union has a custom "Unknown operator … Expected one of …" message. One defect gives one readable line.
+  - `quote-request.schema.ts` (the field-name tuple is derived with `.keyof()`), `kb.schema.ts`, `kb-loader.ts` (path resolved from `__dirname`, so it works from `src/` and `dist/`), `validate-kb.ts`, 6 fixtures, `test/helpers.ts`, 2 test files.
+  - Beyond the prompt: `points` must be a non-negative integer (so every score is ≥ 0 and falls in a band), and band `min ≤ max` / `between` `min ≤ max` checks (README updated).
+  - The first test run failed on one assertion: Zod 4 already includes `operator` in the discriminator issue path, so my formatter printed `operator.operator`. Removed the special case.
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified:** `npm run typecheck` clean; `npm test` → 37 passed; `npm run kb:validate` → `KB v1.1.0 valid (6 factors)`. Fail-fast check: changed `"gt"` → `"greater"` in the real KB → `factors[4].condition.operator: Unknown operator "greater". Expected one of: eq, neq, …`, exit code 1; reverted, `git diff -- kb/` empty, valid again.
 
 ---
 

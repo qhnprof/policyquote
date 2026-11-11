@@ -44,7 +44,7 @@ The knowledge base (KB) holds every scoring and pricing rule. The backend engine
 | `id` | yes | Unique, snake_case. |
 | `description` | yes | Customer-facing; listed in the quote when the factor applies. |
 | `condition` | yes | When the factor applies (leaf or combinator, below). |
-| `points` | yes | Integer points added to `riskScore`. |
+| `points` | yes | Non-negative integer added to `riskScore`, so every score is ≥ 0 and lands in a band. |
 | `perOccurrence` | no | If `true`, points × the numeric value of the condition's field (e.g. 15 per previous claim). Leaf conditions only. |
 
 `riskScore` is the sum of the points of every factor whose condition applies.
