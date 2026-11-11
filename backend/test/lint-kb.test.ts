@@ -6,8 +6,13 @@ afterEach(restoreRealKb);
 const ofKind = (findings: LintFinding[], kind: LintFinding['kind']) => findings.filter((f) => f.kind === kind);
 
 describe('lintKnowledgeBase', () => {
-  it('the real KB has no warnings and one stacking note', () => {
-    const findings = lintKnowledgeBase(loadRealKb());
+  it('the real KB has no lint warnings', () => {
+    expect(lintKnowledgeBase(loadRealKb()).filter((f) => f.level === 'warning')).toEqual([]);
+  });
+
+  it('the reference KB has no warnings and one stacking note', () => {
+    // Frozen reference KB: the exact findings depend on which factors exist.
+    const findings = lintKnowledgeBase(loadFixtureKb('kb-reference'));
     expect(findings.filter((f) => f.level === 'warning')).toEqual([]);
     expect(findings).toEqual([
       expect.objectContaining({ level: 'info', kind: 'stacking', factorIds: ['flat_high_value', 'property_type_flat'] }),

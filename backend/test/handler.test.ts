@@ -31,6 +31,8 @@ afterEach(() => {
 
 describe('handler', () => {
   it('200: returns a full quote for a valid request', async () => {
+    // Frozen reference KB, so a new rule that matches this customer doesn't change the expected quote.
+    const kb = loadFixtureKb('kb-reference');
     const response = await handler(event({}), context);
     expect(response.statusCode).toBe(200);
     expect(response.headers).toMatchObject({
@@ -51,7 +53,7 @@ describe('handler', () => {
         riskMultiplier: 1,
       },
       appliedFactors: [],
-      kbVersion: loadRealKb().version,
+      kbVersion: kb.version,
     });
   });
 

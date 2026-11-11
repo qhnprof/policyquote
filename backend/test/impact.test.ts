@@ -3,7 +3,7 @@ import { createRandom, generateBook, loadBookAssumptions } from '../src/analysis
 import { scoreQuote } from '../src/engine/score-quote';
 import type { KnowledgeBase } from '../src/kb/kb.schema';
 import { quoteRequestSchema } from '../src/validation/quote-request.schema';
-import { loadRealKb, restoreRealKb } from './helpers';
+import { loadFixtureKb, loadRealKb, restoreRealKb } from './helpers';
 
 afterEach(restoreRealKb);
 
@@ -84,10 +84,11 @@ describe('compareKnowledgeBases', () => {
   });
 
   it('counts a points increase as moving customers up, with matching premium totals', () => {
-    const base = loadRealKb();
+    // Frozen reference KB, so a points change in kb/risk-kb.json doesn't change this test's "from".
+    const base = loadFixtureKb('kb-reference');
     const candidate = structuredClone(base);
     const claimsLow = candidate.factors.find((f) => f.id === 'previous_claims_low');
-    if (claimsLow === undefined) throw new Error('real KB has no previous_claims_low');
+    if (claimsLow === undefined) throw new Error('reference KB has no previous_claims_low');
     claimsLow.points = 20;
 
     const report = compareKnowledgeBases(base, candidate, generateBook(1000, 42));
@@ -101,7 +102,8 @@ describe('compareKnowledgeBases', () => {
 
 describe('diffFactors', () => {
   it('reports added, removed, points, condition and other changes by id', () => {
-    const base = loadRealKb().factors;
+    // Frozen reference KB, so adding or removing a factor in kb/risk-kb.json doesn't change the diff.
+    const base = loadFixtureKb('kb-reference').factors;
     const candidate = structuredClone(base)
       .filter((f) => f.id !== 'property_type_flat')
       .map((f) => {
