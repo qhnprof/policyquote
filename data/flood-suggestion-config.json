@@ -1,0 +1,21 @@
+{
+  "description": "Tiers for `npm run kb:suggest-flood`. A postcode district goes in the first tier whose range contains its share of residential properties at HIGH flood risk (≥ 1 in 30 a year). minShare is inclusive, maxShare exclusive. Districts with fewer residential properties than minResidentialProperties are left out (too small to judge).",
+  "group": "flood_risk",
+  "metric": "highShare",
+  "minResidentialProperties": 50,
+  "tiers": [
+    {
+      "id": "flood_risk_district_high",
+      "description": "Postcode district where many homes are at high risk of flooding from rivers or the sea",
+      "minShare": 0.2,
+      "points": 25
+    },
+    {
+      "id": "flood_risk_district_moderate",
+      "description": "Postcode district where some homes are at high risk of flooding from rivers or the sea",
+      "minShare": 0.05,
+      "maxShare": 0.2,
+      "points": 10
+    }
+  ]
+}

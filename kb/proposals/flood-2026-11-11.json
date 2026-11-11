@@ -1,0 +1,202 @@
+{
+  "schemaVersion": 1,
+  "version": "1.2.0",
+  "basePremium": 300,
+  "coverageLoadFactor": 1.2,
+  "riskBands": {
+    "STANDARD": {
+      "min": 0,
+      "max": 25,
+      "multiplier": 1,
+      "summary": "Your details fall within our standard risk range."
+    },
+    "ELEVATED": {
+      "min": 26,
+      "max": 60,
+      "multiplier": 1.5,
+      "summary": "Some of your details raise the risk above our standard range."
+    },
+    "HIGH_RISK": {
+      "min": 61,
+      "max": 999,
+      "multiplier": 2.2,
+      "summary": "Several of your details place this quote in our highest risk range."
+    }
+  },
+  "factors": [
+    {
+      "id": "age_young_elderly",
+      "description": "Under 25 or over 75 — higher risk profile",
+      "condition": {
+        "field": "age",
+        "operator": "outside_range",
+        "min": 25,
+        "max": 75
+      },
+      "points": 20
+    },
+    {
+      "id": "previous_claims_low",
+      "description": "1–2 previous claims",
+      "condition": {
+        "field": "previousClaims",
+        "operator": "between",
+        "min": 1,
+        "max": 2
+      },
+      "points": 15,
+      "perOccurrence": true,
+      "group": "previous_claims"
+    },
+    {
+      "id": "previous_claims_high",
+      "description": "3 or more previous claims",
+      "condition": {
+        "field": "previousClaims",
+        "operator": "gte",
+        "value": 3
+      },
+      "points": 30,
+      "perOccurrence": true,
+      "group": "previous_claims"
+    },
+    {
+      "id": "property_type_flat",
+      "description": "Flat — higher shared risk",
+      "condition": {
+        "field": "propertyType",
+        "operator": "eq",
+        "value": "Flat"
+      },
+      "points": 10
+    },
+    {
+      "id": "property_value_high",
+      "description": "Property value over £750,000",
+      "condition": {
+        "field": "propertyValue",
+        "operator": "gt",
+        "value": 750000
+      },
+      "points": 25
+    },
+    {
+      "id": "flat_high_value",
+      "description": "Flat valued over £500,000 — high-value shared building",
+      "condition": {
+        "all": [
+          {
+            "field": "propertyType",
+            "operator": "eq",
+            "value": "Flat"
+          },
+          {
+            "field": "propertyValue",
+            "operator": "gt",
+            "value": 500000
+          }
+        ]
+      },
+      "points": 35
+    },
+    {
+      "id": "flood_risk_district_high",
+      "description": "Postcode district where many homes are at high risk of flooding from rivers or the sea",
+      "condition": {
+        "field": "postcodeDistrict",
+        "operator": "in",
+        "values": [
+          "PE24",
+          "PE25"
+        ]
+      },
+      "points": 25,
+      "group": "flood_risk"
+    },
+    {
+      "id": "flood_risk_district_moderate",
+      "description": "Postcode district where some homes are at high risk of flooding from rivers or the sea",
+      "condition": {
+        "field": "postcodeDistrict",
+        "operator": "in",
+        "values": [
+          "B6",
+          "B36",
+          "BD23",
+          "BN25",
+          "CA12",
+          "CA18",
+          "CA21",
+          "CA23",
+          "CB24",
+          "CR8",
+          "CT1",
+          "CT6",
+          "CT21",
+          "DN8",
+          "DN14",
+          "DN35",
+          "DY13",
+          "E9",
+          "EX33",
+          "FY5",
+          "FY6",
+          "GL1",
+          "HU4",
+          "HU13",
+          "HU15",
+          "KT1",
+          "KT7",
+          "KT16",
+          "L3",
+          "LA17",
+          "LA21",
+          "LA22",
+          "LN4",
+          "LN11",
+          "LN12",
+          "M1",
+          "ME18",
+          "NE67",
+          "NG14",
+          "NP25",
+          "OL14",
+          "OX1",
+          "PE6",
+          "PE11",
+          "PE13",
+          "PE22",
+          "PL10",
+          "PL13",
+          "PL22",
+          "PO4",
+          "PO5",
+          "PO20",
+          "PO34",
+          "SE13",
+          "SG12",
+          "SL8",
+          "SY6",
+          "TA24",
+          "TN12",
+          "TN36",
+          "TN38",
+          "TQ6",
+          "TR21",
+          "TR24",
+          "TW11",
+          "TW17",
+          "TW18",
+          "TW19",
+          "TW20",
+          "WR8",
+          "YO1",
+          "YO19",
+          "YO30"
+        ]
+      },
+      "points": 10,
+      "group": "flood_risk"
+    }
+  ]
+}

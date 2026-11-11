@@ -6,6 +6,9 @@
 /** The inward code (e.g. "1AA") is always the last three characters of a full postcode. */
 const INWARD_CODE_LENGTH = 3;
 
+/** A UK outward code (postcode district): "EX4", "SW1A", "M1", "E1W". */
+export const UK_OUTWARD_CODE = /^[A-Z]{1,2}[0-9][A-Z0-9]?$/;
+
 export interface PostcodeFields {
   /** The leading letters: "EX" for "EX4 1AA", "E" for "E1 6AN". */
   postcodeArea: string;

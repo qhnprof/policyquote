@@ -134,3 +134,20 @@ Example: add 10 points for coastal postcodes in Cornwall (TR) and Torbay (TQ).
 4. In `backend/`, run `npm run kb:validate`, `npm run typecheck` and `npm test`.
 
 No backend code changes. Only a new *kind* of comparison needs a new operator in the engine.
+
+## Data sources and proposals
+
+Open data is used **offline, at authoring time only**, to propose KB changes. The backend (the Lambda) never reads it.
+
+### Flood risk: Environment Agency, "Risk of Flooding from Rivers and Sea – Postcodes in Areas at Risk"
+
+- Source: [data.gov.uk](https://www.data.gov.uk/dataset/5a98b0a1-2741-4b2f-a51b-5b42f13219f2/risk-of-flooding-from-rivers-and-sea-postcodes-in-areas-at-risk2), revision 2026-11-03, England only. Licence: [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
+- Attribution:
+
+  > © Environment Agency copyright and/or database right 2025. All rights reserved.
+  > Some features of this map are based on digital spatial data from the Centre for Ecology & Hydrology, © NERC (CEH).
+  > © Crown Copyright and Database Rights 2025 OS AC0000807064.
+  > This product is produced in part from PAF® and Multiple Residence Data, the copyright in which is owned by Royal Mail Group Limited and/or Royal Mail Group plc. All rights reserved. Licence number AC0000807064
+
+- Pipeline: unzip the download into `data/raw/flood/` (git-ignored) → `npm run flood:aggregate` writes `data/flood-districts.csv` (one row per postcode district: residential properties, share at high and medium risk; committed) → `npm run kb:suggest-flood` applies the tiers in `data/flood-suggestion-config.json` and writes `kb/proposals/flood-<date>.json` plus a note with source, date, attribution, tiers, caveats and the `kb:impact` summary.
+- A proposal is never applied automatically: a person reviews it and copies the factors into `risk-kb.json` as a normal change (tests, `kb:validate -- --strict`, `kb:impact`). Source details and caveats live in `data/flood-source.json`.

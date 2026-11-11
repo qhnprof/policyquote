@@ -1,0 +1,36 @@
+{
+  "source": {
+    "title": "Risk of Flooding from Rivers and Sea – Postcodes in Areas at Risk",
+    "publisher": "Environment Agency",
+    "url": "https://www.data.gov.uk/dataset/5a98b0a1-2741-4b2f-a51b-5b42f13219f2/risk-of-flooding-from-rivers-and-sea-postcodes-in-areas-at-risk2",
+    "downloadUrl": "https://environment.data.gov.uk/api/file/download?fileDataSetId=97781741-2982-4802-af2e-313fe3fd8f7e&fileName=RoFRS_Postcodes_in_Areas_at_Risk.zip",
+    "file": "RoFRS_Postcodes_in_Areas_at_Risk/DATA/RoFRS_PostcodesAtRisk.csv",
+    "licence": "Open Government Licence v3.0",
+    "licenceUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "revisionDate": "2026-11-03",
+    "coverage": "England",
+    "attribution": [
+      "© Environment Agency copyright and/or database right 2025. All rights reserved.",
+      "Some features of this map are based on digital spatial data from the Centre for Ecology & Hydrology, © NERC (CEH).",
+      "© Crown Copyright and Database Rights 2025 OS AC0000807064.",
+      "This product is produced in part from PAF® and Multiple Residence Data, the copyright in which is owned by Royal Mail Group Limited and/or Royal Mail Group plc. All rights reserved. Licence number AC0000807064"
+    ],
+    "riskBands": {
+      "High": "a 1 in 30 (3.3%) or greater chance of flooding in any year",
+      "Medium": "less than 1 in 30 but at least 1 in 100 (1%) chance in any year"
+    },
+    "caveats": [
+      "The file lists only postcodes with properties in or near areas at risk, so a district's share is measured over those postcodes, not over every home in the district: it overstates district-wide risk.",
+      "Counts are residential properties only (home insurance), from the RES_* columns.",
+      "District-level summaries are coarse: the Environment Agency states the data is not suitable for identifying whether an individual property will flood.",
+      "Covers flooding from rivers and the sea in England only (not surface water, groundwater, Wales or Scotland)."
+    ]
+  },
+  "rawFile": "data/raw/flood/RoFRS_Postcodes_in_Areas_at_Risk/DATA/RoFRS_PostcodesAtRisk.csv",
+  "rawFileModified": "2026-10-14",
+  "aggregatedOn": "2026-11-11",
+  "rowsRead": 271449,
+  "partialPostcodes": 105734,
+  "rowsSkipped": 548,
+  "districts": 2128
+}

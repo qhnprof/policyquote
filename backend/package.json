@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit",
     "kb:validate": "tsx src/kb/validate-kb.ts",
     "kb:impact": "tsx src/analysis/kb-impact.ts",
+    "flood:aggregate": "tsx src/analysis/flood/aggregate.ts",
+    "kb:suggest-flood": "tsx src/analysis/flood/suggest.ts",
     "build": "tsc -p tsconfig.build.json",
     "start:prod": "node dist/server.js"
   },

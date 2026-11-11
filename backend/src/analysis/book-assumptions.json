@@ -1,5 +1,5 @@
 {
-  "description": "Distribution assumptions for the synthetic customer book used by `npm run kb:impact`. Made-up, but shaped like a UK home-insurance book. Weights are relative (they don't need to sum to 1).",
+  "description": "Distribution assumptions for the synthetic customer book used by `npm run kb:impact`. Made-up, but shaped like a UK home-insurance book. Weights are relative (they don't need to sum to 1). The last six postcode districts (PE24, PE25, DN14, TW18, PL10, EX33) have a high share of homes at flood risk in the Environment Agency data, so flood proposals show a non-zero impact.",
   "ageBands": [
     { "min": 18, "max": 24, "weight": 8 },
     { "min": 25, "max": 29, "weight": 8 },
@@ -32,6 +32,7 @@
     "M1", "M20", "LS6", "LS1", "B1", "B15",
     "BS1", "BS8", "CF10", "NE1", "G1", "EH1",
     "NG1", "S1", "L1", "OX1", "CB1", "RG1",
-    "EX1", "EX4", "PL1", "PL4"
+    "EX1", "EX4", "PL1", "PL4",
+    "PE24", "PE25", "DN14", "TW18", "PL10", "EX33"
   ]
 }

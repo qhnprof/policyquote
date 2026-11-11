@@ -333,6 +333,26 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
 
 ---
 
+## Extra E2 — Flood-data rule suggestions (2026-11-11)
+- **Prompt:** Prompt E2 from the guide (plan first; inspect the raw file's columns first): `flood/aggregate.ts` + `npm run flood:aggregate` → `data/flood-districts.csv` (district, properties counted, share at high and medium risk; committed, raw not); `flood/suggest.ts` + `npm run kb:suggest-flood` with tiers in `data/flood-suggestion-config.json` → `kb/proposals/flood-<date>.json` (adds `postcodeDistrict in [...]` factors) plus a markdown note (source, date, licence attribution, tiers, districts per tier); run the impact preview (current KB vs proposal) into the note, with flood districts in the synthetic book; never edit `kb/risk-kb.json`; README attribution; tests (aggregation fixture, tier assignment, proposal passes KB validation).
+- **Data:** at the user's request, the agent found the current data.gov.uk record (Environment Agency, OGL v3, revision 2026-11-03, not retired) and downloaded `RoFRS_Postcodes_in_Areas_at_Risk.zip` (4.8 MB: one 17 MB CSV plus the product description PDF) into the git-ignored `data/raw/flood/`.
+- **Inspection (told to the user before building):**
+  - 271,449 rows, 25 columns. `cntpc` = all properties in the postcode (= RES + NRP + UNC in every row). `{RES,NRP,UNC,TOT}_CNT_{VeryLow,Low,Medium,High}` = properties per likelihood band (High ≥ 1 in 30/yr, Medium 1 in 30 to 1 in 100). The banded total ≤ `cntpc` (the rest are outside flood areas).
+  - Only postcodes in or near flood areas are listed, so district shares overstate district-wide risk (stated as a caveat).
+- **Output:**
+  - **Found during the build:** my first aggregation skipped 106,282 rows as invalid postcodes. Inspection showed ~105,700 of them are partial postcodes such as `PR2 5P*` (grouped units) with a valid outward code, only 548 are junk like `VBN0094*`. Dropping them would have badly understated districts. The aggregator now keeps any row with a valid outward code (counted as `partialPostcodes` in the meta) → 2,128 districts.
+  - Uses **residential** counts (home insurance). Source, licence, revision, verbatim attribution and caveats live in a hand-checked `data/flood-source.json`; the aggregator writes `data/flood-districts.meta.json` (row counts, file date).
+  - Real distribution: median district 0.24% of homes at high risk, 95th percentile 3.6%. With the guide's example tiers (≥ 20% → +25, 5–20% → +10, ≥ 50 homes): 2 districts high (PE24, PE25), 73 moderate. Tiers are validated (no overlaps; min inclusive, max exclusive); each non-empty tier becomes one factor in group `flood_risk`, replacing earlier flood factors on re-runs; minor version bump.
+  - The proposal must pass the KB schema and the linter (no warnings) before it is written.
+  - The impact render moved from the CLI into `analysis/impact-report.ts` so the note reuses it (no copy).
+  - Synthetic book: added PE24, PE25, DN14, TW18, PL10, EX33 (documented in the assumptions file). The B demo numbers are unchanged (41 moved, +£8.03), because the book draws the same random sequence and the claims rule ignores postcodes.
+  - Docs: kb/README.md "Data sources and proposals" (source, licence, exact attribution, pipeline); CLAUDE.md commands and I/O list.
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified:** `npm run typecheck` clean; `npm test` → 155 passed (11 new: aggregation incl. partial and junk rows and the E/EX and B1/B10 traps, CSV round-trip, tier boundaries and min-homes filter, overlapping config rejected, proposal valid + lint-clean + base KB untouched, district-not-prefix matching, re-run replaces flood factors). `npm run flood:aggregate` → "271,449 rows (105,734 partial … kept; 548 skipped) → 2,128 districts" in ~2 s. `npm run kb:suggest-flood` → `kb/proposals/flood-2026-11-11.json` (v1.1.1 → v1.2.0) + note; impact 48 of 1,000 customers move up a band, average +£8.78 (+2.14%). `KB_PATH=…/flood-2026-11-11.json npm run kb:validate -- --strict` → valid, 0 warnings. `kb/risk-kb.json` unchanged (`kb:impact` → No differences). No `data/raw` file staged.
+
+---
+
 ## 01 — <short title> (<date, time>)
 - **Prompt:**
   > _paste the exact prompt_
