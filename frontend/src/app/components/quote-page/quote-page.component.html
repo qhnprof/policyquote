@@ -1,1 +1,130 @@
-<p>quote-page works!</p>
+<div class="quote-layout">
+  <section class="panel" aria-labelledby="quote-form-title">
+    <h1 id="quote-form-title" class="panel-title">Get a home insurance quote</h1>
+    <p class="panel-intro">Tell us about you and your property. It takes about a minute.</p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="quote-form">
+      <div class="field">
+        <label for="customerName">Full name</label>
+        <input
+          id="customerName"
+          type="text"
+          formControlName="customerName"
+          autocomplete="name"
+          maxlength="100"
+          [attr.aria-invalid]="fieldError('customerName') ? true : null"
+          [attr.aria-describedby]="fieldError('customerName') ? 'customerName-error' : null"
+        />
+        @if (fieldError('customerName'); as error) {
+          <p id="customerName-error" class="field-error">{{ error }}</p>
+        }
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="age">Age</label>
+          <input
+            id="age"
+            type="number"
+            inputmode="numeric"
+            formControlName="age"
+            min="18"
+            max="120"
+            step="1"
+            [attr.aria-invalid]="fieldError('age') ? true : null"
+            [attr.aria-describedby]="fieldError('age') ? 'age-error' : null"
+          />
+          @if (fieldError('age'); as error) {
+            <p id="age-error" class="field-error">{{ error }}</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="propertyType">Property type</label>
+          <select id="propertyType" formControlName="propertyType">
+            @for (type of propertyTypes; track type) {
+              <option [value]="type">{{ type }}</option>
+            }
+          </select>
+          @if (fieldError('propertyType'); as error) {
+            <p id="propertyType-error" class="field-error">{{ error }}</p>
+          }
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="propertyValue">Property value</label>
+        <div class="input-prefix">
+          <span class="prefix" aria-hidden="true">£</span>
+          <input
+            id="propertyValue"
+            type="number"
+            inputmode="decimal"
+            formControlName="propertyValue"
+            min="1"
+            step="1000"
+            [attr.aria-invalid]="fieldError('propertyValue') ? true : null"
+            [attr.aria-describedby]="fieldError('propertyValue') ? 'propertyValue-error' : 'propertyValue-hint'"
+          />
+        </div>
+        <p id="propertyValue-hint" class="field-hint">The cost to rebuild or buy, in pounds.</p>
+        @if (fieldError('propertyValue'); as error) {
+          <p id="propertyValue-error" class="field-error">{{ error }}</p>
+        }
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="postcode">Postcode</label>
+          <input
+            id="postcode"
+            type="text"
+            formControlName="postcode"
+            autocomplete="postal-code"
+            autocapitalize="characters"
+            spellcheck="false"
+            [attr.aria-invalid]="fieldError('postcode') ? true : null"
+            [attr.aria-describedby]="fieldError('postcode') ? 'postcode-error' : null"
+          />
+          @if (fieldError('postcode'); as error) {
+            <p id="postcode-error" class="field-error">{{ error }}</p>
+          }
+        </div>
+
+        <div class="field">
+          <label for="previousClaims">Previous claims</label>
+          <input
+            id="previousClaims"
+            type="number"
+            inputmode="numeric"
+            formControlName="previousClaims"
+            min="0"
+            max="20"
+            step="1"
+            [attr.aria-invalid]="fieldError('previousClaims') ? true : null"
+            [attr.aria-describedby]="fieldError('previousClaims') ? 'previousClaims-error' : null"
+          />
+          @if (fieldError('previousClaims'); as error) {
+            <p id="previousClaims-error" class="field-error">{{ error }}</p>
+          }
+        </div>
+      </div>
+
+      <button type="submit" class="button-primary" [disabled]="!canSubmit()" [attr.aria-busy]="loading()">
+        {{ submitLabel() }}
+      </button>
+    </form>
+  </section>
+
+  <section class="panel result-panel" aria-labelledby="quote-result-title">
+    <h2 id="quote-result-title" class="visually-hidden">Your quote</h2>
+    @if (errorMessage(); as message) {
+      <p class="alert" role="alert">{{ message }}</p>
+    }
+    @if (quoteResult(); as quote) {
+      <app-quote-result [quote]="quote" />
+    } @else if (!errorMessage()) {
+      <p class="empty-state">{{ loading() ? 'Calculating your quote…' : 'Your quote will appear here.' }}</p>
+    }
+  </section>
+</div>

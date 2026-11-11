@@ -174,6 +174,34 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
 
 ---
 
+## 12 — Quote page with Signals (2026-11-11)
+- **Prompt:**
+  > Implement QuotePageComponent (src/app/components/quote-page/) and render it from the root App component, replacing the placeholder template. Plan first.
+  > - Reactive form built with NonNullableFormBuilder: customerName, age, propertyType (select: House/Flat/Bungalow), propertyValue (£), postcode, previousClaims. Validators mirror the backend rules. Show an error under each field once it's touched.
+  > - UI state as signals only: loading = signal(false), quoteResult = signal<QuoteResponse | null>(null), errorMessage = signal<string | null>(null). No BehaviorSubject or Subject.
+  > - Bridge the form into signals with toSignal(form.statusChanges) and toSignal(form.valueChanges), with initial values.
+  > - computed(): canSubmit (form valid and not loading) and submitLabel ("Getting your quote…" while loading).
+  > - effect(): save the form draft to localStorage whenever it changes (inside try/catch), and restore it once in the constructor. Add a one-line comment on why this is an effect (syncing to an outside API) rather than a computed.
+  > - On submit: set loading, clear the error, call QuoteService.requestQuote. On success set quoteResult; on error set errorMessage; always reset loading (finalize).
+  > - Use @if / @for and pass the result to <app-quote-result [quote]="...">. For now give QuoteResultComponent its quote = input.required<QuoteResponse>() and a minimal template; I'll build it out in the next step.
+  > - The app is zoneless: tell me in one sentence why everything the template shows must come from a signal or the form.
+  > Run npm run build.
+- **Output:**
+  - The plan was proposed and approved ("go with your recommended actions").
+  - **Decision:** the localStorage draft leaves out `customerName`, so no personal name is stored in the browser in plain text (insurer context). Age, property details, postcode and claims are saved.
+  - Number controls are typed `number | null`, because an empty number input really gives `null`; `toRequest()` narrows the nulls away (no `!`).
+  - Validators in `quote-form.validators.ts` (`notBlank`, `integer`, `positive`, `ukPostcode`, the same pattern as the backend) plus Angular's required/min/max/maxLength. One message per field rule.
+  - The draft is restored with `patchValue` in the constructor, keeping only known keys with the right types; a corrupt draft is ignored.
+  - **Addition:** submit also clears the previous `quoteResult`, so a failed request doesn't show an old quote next to the error.
+  - Label "Previous claims", not "Claims in the last 5 years" (my first draft invented a time window the backend doesn't define).
+  - Zoneless, in one sentence: without zone.js, Angular re-renders only when told something changed (a signal the template reads, a template event, or the form's own events), so a plain field set in an HTTP callback would never reach the screen.
+  - Specs: `quote-page` (disabled until valid, touched-field error, loading label then result, friendly error, draft without the name and restored, corrupt draft ignored); `App` and `quote-result` specs updated.
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified:** `npm run build` clean; `ng test --watch=false` → 13 passed; a grep for `any`, `Subject`, `as unknown as` and non-null `!.` in non-spec `src` → none.
+
+---
+
 ## 01 — <short title> (<date, time>)
 - **Prompt:**
   > _paste the exact prompt_

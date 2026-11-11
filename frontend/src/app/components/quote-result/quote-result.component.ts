@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, input } from '@angular/core';
+import type { QuoteResponse } from '../../models/quote.models';
 
 @Component({
   imports: [],
@@ -6,4 +7,6 @@ import { Component } from '@angular/core';
   styleUrl: './quote-result.component.css',
   templateUrl: './quote-result.component.html',
 })
-export class QuoteResultComponent {}
+export class QuoteResultComponent {
+  readonly quote = input.required<QuoteResponse>();
+}

@@ -1,21 +1,110 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { QuotePageComponent } from './quote-page.component';
+import { GENERIC_ERROR_MESSAGE } from '../../services/quote.service';
+import { DRAFT_STORAGE_KEY, QuotePageComponent } from './quote-page.component';
 
 describe('QuotePageComponent', () => {
-  let component: QuotePageComponent;
   let fixture: ComponentFixture<QuotePageComponent>;
+  let element: HTMLElement;
+  let http: HttpTestingController;
+
+  const query = <T extends Element>(selector: string): T => {
+    const found = element.querySelector<T>(selector);
+    if (found === null) throw new Error(`No element matches ${selector}`);
+    return found;
+  };
+  const button = () => query<HTMLButtonElement>('button[type="submit"]');
+
+  function type(id: string, value: string): void {
+    const input = query<HTMLInputElement>(`#${id}`);
+    input.value = value;
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new Event('blur'));
+  }
+
+  async function fillValidForm(): Promise<void> {
+    type('customerName', 'Jane Doe');
+    type('age', '40');
+    type('propertyValue', '300000');
+    type('postcode', 'sw1a 1aa');
+    type('previousClaims', '0');
+    await fixture.whenStable();
+  }
+
+  async function create(): Promise<void> {
+    fixture = TestBed.createComponent(QuotePageComponent);
+    element = fixture.nativeElement;
+    await fixture.whenStable();
+  }
 
   beforeEach(async () => {
+    localStorage.clear();
     await TestBed.configureTestingModule({
       imports: [QuotePageComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
-
-    fixture = TestBed.createComponent(QuotePageComponent);
-    component = fixture.componentInstance;
-    await fixture.whenStable();
+    http = TestBed.inject(HttpTestingController);
+    await create();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  afterEach(() => http.verify());
+
+  it('disables the button until the form is valid', async () => {
+    expect(button().disabled).toBe(true);
+    await fillValidForm();
+    expect(button().disabled).toBe(false);
+    expect(button().textContent?.trim()).toBe('Get my quote');
+  });
+
+  it('shows a field error once a field is touched', async () => {
+    type('age', '15');
+    await fixture.whenStable();
+    expect(query('#age-error').textContent).toContain('between 18 and 120');
+    expect(button().disabled).toBe(true);
+  });
+
+  it('shows the loading label, then the quote', async () => {
+    await fillValidForm();
+    button().click();
+    await fixture.whenStable();
+    expect(button().textContent?.trim()).toBe('Getting your quote…');
+    expect(button().disabled).toBe(true);
+
+    const call = http.expectOne('/policy/quote');
+    expect(call.request.body).toMatchObject({ customerName: 'Jane Doe', age: 40, postcode: 'sw1a 1aa' });
+    call.flush({ riskBand: 'STANDARD', monthlyPremium: 30 });
+    await fixture.whenStable();
+
+    expect(element.querySelector('app-quote-result')?.textContent).toContain('STANDARD');
+    expect(button().textContent?.trim()).toBe('Get my quote');
+  });
+
+  it('shows a friendly error when the request fails', async () => {
+    await fillValidForm();
+    button().click();
+    http.expectOne('/policy/quote').flush({}, { status: 502, statusText: 'Bad Gateway' });
+    await fixture.whenStable();
+    expect(query('[role="alert"]').textContent).toContain(GENERIC_ERROR_MESSAGE);
+    expect(button().disabled).toBe(false);
+  });
+
+  it('saves a draft without the customer name, and restores it', async () => {
+    await fillValidForm();
+    const saved = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) ?? '{}');
+    expect(saved).toEqual({ age: 40, propertyType: 'House', propertyValue: 300000, postcode: 'sw1a 1aa', previousClaims: 0 });
+    expect(saved).not.toHaveProperty('customerName');
+
+    fixture.destroy();
+    await create();
+    expect(query<HTMLInputElement>('#postcode').value).toBe('sw1a 1aa');
+    expect(query<HTMLInputElement>('#customerName').value).toBe('');
+  });
+
+  it('ignores a corrupt draft', async () => {
+    localStorage.setItem(DRAFT_STORAGE_KEY, '{not json');
+    fixture.destroy();
+    await create();
+    expect(query<HTMLInputElement>('#postcode').value).toBe('');
   });
 });
