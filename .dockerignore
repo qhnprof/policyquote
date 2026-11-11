@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+**/.angular
+**/coverage
+.git
+data/raw
+reports
+frontend
+*.log
+.env
+.env.*
