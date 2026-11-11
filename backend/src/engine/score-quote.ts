@@ -56,13 +56,22 @@ function buildRiskSummary(bandSummary: string, appliedFactors: readonly AppliedF
   return `${bandSummary} Factors: ${descriptions}.`;
 }
 
-/** Pure scoring and pricing. Every number, band and rule comes from the KB. */
-export function scoreQuote(input: QuoteRequest, kb: KnowledgeBase): QuoteResult {
+export interface RiskAssessment {
+  appliedFactors: AppliedFactor[];
+  riskScore: number;
+}
+
+/** The factors that apply (in KB order) and the resulting score. Shared by scoreQuote and the KB linter. */
+export function assessRisk(input: ConditionInput, kb: KnowledgeBase): RiskAssessment {
   const appliedFactors: AppliedFactor[] = kb.factors
     .filter((factor) => evaluateCondition(factor.condition, input))
     .map((factor) => ({ id: factor.id, description: factor.description, points: pointsFor(factor, input) }));
+  return { appliedFactors, riskScore: appliedFactors.reduce((sum, factor) => sum + factor.points, 0) };
+}
 
-  const riskScore = appliedFactors.reduce((sum, factor) => sum + factor.points, 0);
+/** Pure scoring and pricing. Every number, band and rule comes from the KB. */
+export function scoreQuote(input: QuoteRequest, kb: KnowledgeBase): QuoteResult {
+  const { appliedFactors, riskScore } = assessRisk(input, kb);
   const { name: riskBand, band } = resolveBand(riskScore, kb);
 
   const annualPremium = roundToPence(kb.basePremium * band.multiplier * kb.coverageLoadFactor);

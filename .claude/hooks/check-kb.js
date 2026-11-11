@@ -49,7 +49,8 @@ async function main() {
   if (typeof filePath !== 'string' || !samePath(path.resolve(projectDir, filePath), kbPath)) process.exit(0);
 
   const checks = [
-    ['KB validation', 'npm --prefix backend run kb:validate'],
+    // --strict: lint warnings (overlaps, gaps, dead rules, unreachable bands) also fail, so the agent hears about them at once.
+    ['KB validation and lint', 'npm --prefix backend run kb:validate -- --strict'],
     ['Backend tests', 'npm --prefix backend test -- --silent'],
   ];
   for (const [name, command] of checks) {

@@ -76,6 +76,8 @@ export const factorSchema = z.strictObject({
   condition: conditionSchema,
   points: z.number().int().nonnegative(),
   perOccurrence: z.boolean().optional(),
+  /** Factors sharing a group are meant to be either/or (the linter warns on overlaps and gaps). */
+  group: z.string().regex(/^[a-z][a-z0-9]*(_[a-z0-9]+)*$/, 'Must be snake_case').optional(),
 });
 
 export const riskBandSchema = z

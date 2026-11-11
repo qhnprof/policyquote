@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "version": "1.0.0",
+  "basePremium": 100,
+  "coverageLoadFactor": 1,
+  "riskBands": {
+    "LOW": {
+      "min": 0,
+      "max": 9,
+      "multiplier": 1,
+      "summary": "Low risk."
+    },
+    "HIGH": {
+      "min": 10,
+      "max": 99,
+      "multiplier": 2,
+      "summary": "High risk."
+    }
+  },
+  "factors": [
+    {
+      "id": "young",
+      "description": "Young",
+      "condition": {
+        "field": "age",
+        "operator": "lt",
+        "value": 25
+      },
+      "points": 10
+    },
+    {
+      "id": "very_old",
+      "description": "Over 130",
+      "condition": {
+        "field": "age",
+        "operator": "gt",
+        "value": 130
+      },
+      "points": 10
+    }
+  ]
+}

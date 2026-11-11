@@ -278,6 +278,26 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
 
 ---
 
+## Extra C — KB linter (2026-11-11)
+- **Prompt:** Prompt C from the guide (plan first): an optional `group` on factors (set `previous_claims` on the two claims factors, documented in the README); `lint-kb.ts` with `lintKnowledgeBase(kb)` that works by probing (probe values from the KB's thresholds and neighbours, the rules' values and prefixes, and the request schema's enums and min/max, kept inside the request limits) and detects overlap, gap, dead rule, unreachable band and stacking (info); `kb:validate` prints findings, warnings fail only with `--strict`, and the hook switches to `--strict`; tests with fixtures (overlap at 3, gap at 3, age > 130 dead, real KB clean with one stacking note).
+- **Output:**
+  - Planned together with B; approved.
+  - Small engine refactor: `assessRisk(input, kb)` (applied factors + score) split out of `scoreQuote`, so the linter reuses the exact scoring path rather than a copy.
+  - Probes are typed by the request schema (`ZodNumber` → `minValue`/`maxValue`, `ZodEnum` → options, otherwise free text plus a value that matches no rule), so there is no branching on field names. Literals are read generically from each leaf (every key except `field`/`operator`). Each probe is checked with the field's own schema, so `propertyValue` (exclusive > 0) and whole-number ages stay valid.
+  - The probe input is typed with an exhaustive `z.record(quoteRequestFieldSchema, z.unknown())` instead of a cast (rule 4). The first draft used `as Record<…>`; rejected.
+  - Gaps are checked only for single-field numeric groups. Same-group pairs are never reported as stacking (that's an overlap). A note is emitted, rather than a hang, if probes would exceed 200,000 combinations; the real KB takes ~25 ms.
+  - KB: `group: "previous_claims"` on both claims factors; version 1.1.0 → 1.1.1 (metadata only, a patch under the skill's rules).
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified:**
+  - `npm run typecheck` clean; `npm test` → 133 passed (6 new).
+  - `npm run kb:validate` → `KB v1.1.1 valid (6 factors)` · `Lint: 0 warnings, 1 note` · `info [stacking] "flat_high_value" only applies together with "property_type_flat" … (35 + 10 = 45)`; same with `--strict`, exit 0.
+  - Overlap fixture with `--strict` → `warning [overlap] … both apply when previousClaims = 3`, exit 1 (exit 0 without `--strict`).
+  - Hook: changing `previous_claims_high` to `≥ 2` → hook exit 2 with "previous_claims_low and previous_claims_high both apply when previousClaims = 2"; reverted.
+  - `kb:impact` on this commit's KB change → v1.1.0 → v1.1.1, both claims factors "description/flags changed", 0 customers moved, £0.00.
+
+---
+
 ## 01 — <short title> (<date, time>)
 - **Prompt:**
   > _paste the exact prompt_

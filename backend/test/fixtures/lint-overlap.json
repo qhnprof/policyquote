@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "version": "1.0.0",
+  "basePremium": 100,
+  "coverageLoadFactor": 1,
+  "riskBands": {
+    "LOW": {
+      "min": 0,
+      "max": 9,
+      "multiplier": 1,
+      "summary": "Low risk."
+    },
+    "HIGH": {
+      "min": 10,
+      "max": 99,
+      "multiplier": 2,
+      "summary": "High risk."
+    }
+  },
+  "factors": [
+    {
+      "id": "claims_one_to_three",
+      "description": "claims_one_to_three",
+      "condition": {
+        "field": "previousClaims",
+        "operator": "between",
+        "min": 1,
+        "max": 3
+      },
+      "points": 5,
+      "group": "previous_claims"
+    },
+    {
+      "id": "claims_three_plus",
+      "description": "claims_three_plus",
+      "condition": {
+        "field": "previousClaims",
+        "operator": "gte",
+        "value": 3
+      },
+      "points": 10,
+      "group": "previous_claims"
+    }
+  ]
+}

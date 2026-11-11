@@ -46,8 +46,23 @@ The knowledge base (KB) holds every scoring and pricing rule. The backend engine
 | `condition` | yes | When the factor applies (leaf or combinator, below). |
 | `points` | yes | Non-negative integer added to `riskScore`, so every score is ≥ 0 and lands in a band. |
 | `perOccurrence` | no | If `true`, points × the numeric value of the condition's field (e.g. 15 per previous claim). Leaf conditions only. |
+| `group` | no | snake_case name. Factors in the same group are either/or: exactly one should apply to a given input (e.g. `previous_claims` for "1–2 claims" and "3 or more"). The linter warns when two of them apply at once (overlap) or when a value between covered values is covered by none (gap). |
 
 `riskScore` is the sum of the points of every factor whose condition applies.
+
+### Linting
+
+`npm run kb:validate` checks the schema, then lints the rules by probing them: it builds test values for each request field from the thresholds, values and prefixes the rules use (each threshold and its neighbours), plus the request limits (e.g. age 18–120), and evaluates every factor on every combination with the real engine. It reports:
+
+| Finding | Level | Meaning |
+| --- | --- | --- |
+| overlap | warning | Two factors of the same `group` apply to the same input. |
+| gap | warning | A value no factor in a `group` covers, between values the group does cover. |
+| dead rule | warning | A factor that never applies within the request limits (e.g. `age > 130`). |
+| unreachable band | warning | A band no probed input reaches. |
+| stacking | info | Factor A only ever applies together with factor B, so their points add up (expected for `flat_high_value` + `property_type_flat`). |
+
+Warnings fail the command only with `--strict` (used by CI and the agent's post-edit hook); info notes never fail it. Probing tests the boundaries the rules mention: a strong check, not a proof.
 
 ## Conditions
 
