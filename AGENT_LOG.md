@@ -298,6 +298,20 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
 
 ---
 
+## Extra D — Example profiles (2026-11-11)
+- **Prompt:** Prompt D from the guide: `data/example-profiles.ts` with four personas (inputs only, never prices); `ExampleProfilesComponent` requests a live quote for each in parallel via `QuoteService`, keeps results in a signal, and uses `computed()` for the "from £X a month" headline (lowest monthly price); each card is a real `<button>` with label, one-line description, monthly price and `RiskBandBadgeComponent`; a click emits profile + quote through `output()` and `QuotePageComponent` fills the form and shows that quote; a placeholder while loading; a failed request hides its card.
+- **Output:**
+  - `forkJoin` over the four `requestQuote` calls, each with `catchError → of(null)`, so one failure only hides that card. `results = signal<ProfileQuote[] | null>(null)` (null = loading). `headline = computed(...)` formats the minimum with `formatCurrency` and the app locale. `profileSelected = output<ProfileQuote>()`.
+  - Loading placeholders show the persona labels plus a shimmer bar (still under reduced motion: no animation). Cards: 4 columns on desktop, 2 under 960px, 1 under 480px.
+  - `QuotePageComponent.useExample()`: `form.setValue(profile.request)`, clears the error, shows the quote. The draft effect then saves it (still without the name).
+  - Rejected my first draft: it used `queueMicrotask` so a `profiles` input could be read after binding. That was a workaround nobody asked for; replaced it with the constant and a constructor subscription.
+  - Specs: new `example-profiles` spec (parallel requests + placeholders, 4 cards + headline, a failed card hidden, click emits). The `quote-page` spec now answers the 4 example requests on create (otherwise they collide with `expectOne` and `verify()`), plus a "card fills the form and shows the quote" test.
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified:** `npm run build` clean; `ng test` → 23 passed (5 new). In Chrome against the live backend (KB v1.1.1): First-time buyer ELEVATED £45.00 · Family home STANDARD £30.00 · City flat HIGH RISK £66.00 · Coastal home STANDARD £30.00; headline "Home insurance from £30.00 a month". Clicking City flat → form filled (Chris Lee, 35, Flat, £900,000) and the result HIGH RISK £66.00/mo, £792.00/yr, score 70. At 600px (measured in a same-origin iframe, because the window wouldn't resize): 2 card columns, form and result stacked, no horizontal scroll. A grep of non-spec frontend source finds no prices, only property values. The "jumps to ELEVATED with the flood rule" check is left for the live demo (step 09 rehearsal).
+
+---
+
 ## 01 — <short title> (<date, time>)
 - **Prompt:**
   > _paste the exact prompt_

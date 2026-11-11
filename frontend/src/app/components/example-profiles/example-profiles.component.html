@@ -1,0 +1,48 @@
+<section class="examples" aria-labelledby="examples-title">
+  <div class="examples-header">
+    <h2 id="examples-title" class="examples-title">
+      @if (headline(); as text) {
+        {{ text }}
+      } @else {
+        Example quotes
+      }
+    </h2>
+    <p class="examples-intro">Live prices for example customers. Choose one to see the full quote and fill in the form.</p>
+  </div>
+
+  @if (results(); as loaded) {
+    @if (loaded.length > 0) {
+      <ul class="cards">
+        @for (result of loaded; track result.profile.id) {
+          <li>
+            <button type="button" class="card" (click)="select(result)">
+              <span class="card-top">
+                <span class="card-label">{{ result.profile.label }}</span>
+                <app-risk-band-badge [riskBand]="result.quote.riskBand" />
+              </span>
+              <span class="card-description">{{ result.profile.description }}</span>
+              <span class="card-price">
+                <span class="card-amount">{{ result.quote.monthlyPremium | currency: 'GBP' }}</span>
+                <span class="card-period">a month</span>
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  } @else {
+    <ul class="cards" aria-busy="true" aria-label="Loading example prices">
+      @for (profile of profiles; track profile.id) {
+        <li>
+          <div class="card card--loading">
+            <span class="card-top">
+              <span class="card-label">{{ profile.label }}</span>
+            </span>
+            <span class="card-description">{{ profile.description }}</span>
+            <span class="card-price"><span class="skeleton" aria-hidden="true"></span></span>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>

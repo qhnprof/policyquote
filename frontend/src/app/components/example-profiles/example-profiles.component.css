@@ -1,0 +1,137 @@
+.examples {
+  margin-bottom: var(--space-5);
+}
+
+.examples-header {
+  margin-bottom: var(--space-4);
+}
+
+.examples-title {
+  margin: 0;
+  font-size: var(--text-xl);
+}
+
+.examples-intro {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-muted);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 960px) {
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.cards > li {
+  display: flex;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+
+.card:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.card--loading {
+  cursor: default;
+}
+
+.card--loading:hover {
+  border-color: var(--color-border);
+  transform: none;
+}
+
+.card-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.card-label {
+  font-weight: 700;
+}
+
+.card-description {
+  flex-grow: 1;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.card-price {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  min-height: 1.75rem;
+}
+
+.card-amount {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.card-period {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.skeleton {
+  display: inline-block;
+  width: 6rem;
+  height: 1.25rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--color-surface-muted), var(--color-border), var(--color-surface-muted));
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+
+  .card:hover {
+    transform: none;
+  }
+}

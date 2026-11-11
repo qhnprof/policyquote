@@ -1,9 +1,12 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import type { QuoteResponse } from '../../models/quote.models';
+import { EXAMPLE_PROFILES } from '../../data/example-profiles';
+import type { QuoteRequest, QuoteResponse } from '../../models/quote.models';
 import { GENERIC_ERROR_MESSAGE } from '../../services/quote.service';
 import { DRAFT_STORAGE_KEY, QuotePageComponent } from './quote-page.component';
+
+const exampleNames = new Set(EXAMPLE_PROFILES.map((profile) => profile.request.customerName));
 
 describe('QuotePageComponent', () => {
   let fixture: ComponentFixture<QuotePageComponent>;
@@ -33,9 +36,20 @@ describe('QuotePageComponent', () => {
     await fixture.whenStable();
   }
 
-  async function create(): Promise<void> {
+  /** The example cards request a quote per persona on load; answer them so they don't clash with form submits. */
+  function answerExampleRequests(reply: (body: QuoteRequest) => QuoteResponse | null = () => null): void {
+    for (const call of http.match((request) => request.url === '/policy/quote' && exampleNames.has(request.body?.customerName))) {
+      const quote = reply(call.request.body);
+      if (quote === null) call.flush({}, { status: 500, statusText: 'Server Error' });
+      else call.flush(quote);
+    }
+  }
+
+  async function create(exampleReply?: (body: QuoteRequest) => QuoteResponse | null): Promise<void> {
     fixture = TestBed.createComponent(QuotePageComponent);
     element = fixture.nativeElement;
+    await fixture.whenStable();
+    answerExampleRequests(exampleReply);
     await fixture.whenStable();
   }
 
@@ -110,6 +124,30 @@ describe('QuotePageComponent', () => {
     await create();
     expect(query<HTMLInputElement>('#postcode').value).toBe('sw1a 1aa');
     expect(query<HTMLInputElement>('#customerName').value).toBe('');
+  });
+
+  it('fills the form and shows the quote when an example card is chosen', async () => {
+    fixture.destroy();
+    const cityFlat: QuoteResponse = {
+      monthlyPremium: 66,
+      annualPremium: 792,
+      riskBand: 'HIGH_RISK',
+      riskScore: 70,
+      riskSummary: 'Several of your details place this quote in our highest risk range.',
+      coverageDetails: { propertyType: 'Flat', propertyValue: 900000, basePremium: 300, coverageLoadFactor: 1.2, riskMultiplier: 2.2 },
+      appliedFactors: [],
+      kbVersion: '1.1.1',
+    };
+    await create((body) => (body.customerName === 'Chris Lee' ? cityFlat : null));
+
+    query<HTMLButtonElement>('button.card').click();
+    await fixture.whenStable();
+
+    expect(query<HTMLInputElement>('#customerName').value).toBe('Chris Lee');
+    expect(query<HTMLInputElement>('#propertyValue').value).toBe('900000');
+    expect(query<HTMLSelectElement>('#propertyType').value).toBe('Flat');
+    expect(query('app-quote-result').textContent).toContain('£66.00');
+    expect(button().disabled).toBe(false);
   });
 
   it('ignores a corrupt draft', async () => {

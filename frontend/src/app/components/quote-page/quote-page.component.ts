@@ -4,6 +4,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { finalize } from 'rxjs';
 import { PROPERTY_TYPES, type PropertyType, type QuoteRequest, type QuoteResponse } from '../../models/quote.models';
 import { GENERIC_ERROR_MESSAGE, QuoteService } from '../../services/quote.service';
+import { ExampleProfilesComponent, type ProfileQuote } from '../example-profiles/example-profiles.component';
 import { QuoteResultComponent } from '../quote-result/quote-result.component';
 import { integer, notBlank, positive, ukPostcode } from './quote-form.validators';
 
@@ -55,7 +56,7 @@ function readDraft(): QuoteDraft {
 }
 
 @Component({
-  imports: [ReactiveFormsModule, QuoteResultComponent],
+  imports: [ReactiveFormsModule, QuoteResultComponent, ExampleProfilesComponent],
   selector: 'app-quote-page',
   styleUrl: './quote-page.component.css',
   templateUrl: './quote-page.component.html',
@@ -111,6 +112,13 @@ export class QuotePageComponent {
         // Storage can be full, disabled or blocked (private mode): the draft is a convenience only.
       }
     });
+  }
+
+  /** An example card was chosen: fill the form with its inputs and show its live quote. */
+  protected useExample({ profile, quote }: ProfileQuote): void {
+    this.form.setValue(profile.request);
+    this.errorMessage.set(null);
+    this.quoteResult.set(quote);
   }
 
   /** The message under a field: shown once the field is touched and invalid. */
