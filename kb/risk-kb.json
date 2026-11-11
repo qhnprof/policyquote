@@ -1,0 +1,44 @@
+{
+  "version": "1.0.0",
+  "basePremium": 300,
+  "coverageLoadFactor": 1.2,
+  "riskBands": {
+    "STANDARD": { "min": 0, "max": 25, "multiplier": 1.0, "summary": "Standard risk — no extra loading" },
+    "ELEVATED": { "min": 26, "max": 60, "multiplier": 1.5, "summary": "Elevated risk — premium loaded by 50%" },
+    "HIGH_RISK": { "min": 61, "multiplier": 2.0, "summary": "High risk — premium doubled" }
+  },
+  "factors": [
+    {
+      "id": "age_young_elderly",
+      "description": "Under 25 or over 75 — higher risk profile",
+      "condition": { "field": "age", "operator": "outside_range", "min": 25, "max": 75 },
+      "points": 20
+    },
+    {
+      "id": "previous_claims_low",
+      "description": "1–2 previous claims",
+      "condition": { "field": "previousClaims", "operator": "between", "min": 1, "max": 2 },
+      "points": 15,
+      "perOccurrence": true
+    },
+    {
+      "id": "previous_claims_high",
+      "description": "3 or more previous claims",
+      "condition": { "field": "previousClaims", "operator": "gte", "value": 3 },
+      "points": 30,
+      "perOccurrence": true
+    },
+    {
+      "id": "property_type_flat",
+      "description": "Flat — higher shared risk",
+      "condition": { "field": "propertyType", "operator": "eq", "value": "Flat" },
+      "points": 10
+    },
+    {
+      "id": "property_value_high",
+      "description": "Property value over £750,000",
+      "condition": { "field": "propertyValue", "operator": "gt", "value": 750000 },
+      "points": 25
+    }
+  ]
+}
