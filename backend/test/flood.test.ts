@@ -95,7 +95,8 @@ describe('tier assignment', () => {
 
 describe('flood proposal', () => {
   it('passes KB validation and the linter, without touching the base KB', async () => {
-    const base = loadRealKb();
+    // Pinned base version, so the expected bump doesn't change with every KB release.
+    const base = { ...loadRealKb(), version: '2.3.4' };
     const before = JSON.stringify(base);
     const { districts } = await aggregateFloodLines(fixtureLines());
     const proposal = buildFloodProposal(base, assignFloodTiers(districts, config), config);
@@ -103,14 +104,15 @@ describe('flood proposal', () => {
     expect(knowledgeBaseSchema.safeParse(proposal).success).toBe(true);
     expect(lintKnowledgeBase(proposal).filter((f) => f.level === 'warning')).toEqual([]);
     expect(JSON.stringify(base)).toBe(before);
-    expect(proposal.version).toBe('1.2.0');
+    expect(proposal.version).toBe('2.4.0');
     // Empty tiers add no factor (an empty "in" list would be invalid).
     expect(proposal.factors.filter((f) => f.group === 'flood_risk').map((f) => f.id)).toEqual(['flood_high']);
   });
 
   it('applies by postcode district, not by prefix', async () => {
     const { districts } = await aggregateFloodLines(fixtureLines());
-    const proposal = buildFloodProposal(loadRealKb(), assignFloodTiers(districts, config), config);
+    // Base without shipped factors, so only the proposed flood tiers can apply (flood_zone_postcode also covers EX).
+    const proposal = buildFloodProposal({ ...loadRealKb(), factors: [] }, assignFloodTiers(districts, config), config);
     const quote = (postcode: string) =>
       scoreQuote(
         quoteRequestSchema.parse({ customerName: 'Jo', age: 40, propertyType: 'House', propertyValue: 300000, postcode, previousClaims: 0 }),
@@ -123,10 +125,10 @@ describe('flood proposal', () => {
 
   it('replaces earlier flood factors when re-run on newer data', async () => {
     const { districts } = await aggregateFloodLines(fixtureLines());
-    const first = buildFloodProposal(loadRealKb(), assignFloodTiers(districts, config), config);
+    const first = buildFloodProposal({ ...loadRealKb(), version: '2.3.4' }, assignFloodTiers(districts, config), config);
     const second = buildFloodProposal(first, assignFloodTiers(districts, config), config);
     expect(second.factors.filter((f) => f.group === 'flood_risk')).toHaveLength(1);
-    expect(second.version).toBe('1.3.0');
+    expect(second.version).toBe('2.5.0');
   });
 
   it('has a source file with a licence and attribution', () => {

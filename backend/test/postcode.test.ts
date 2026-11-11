@@ -46,7 +46,8 @@ describe('rules on derived postcode fields', () => {
   });
 
   it('scoreQuote derives the fields, so a KB rule on a district applies end to end', () => {
-    const kb: KnowledgeBase = structuredClone(loadRealKb());
+    // Only the rule under test, so shipped rules (e.g. flood_zone_postcode on EX) don't change the expected list.
+    const kb: KnowledgeBase = { ...structuredClone(loadRealKb()), factors: [] };
     kb.factors.push({ id: 'district_ex4', description: 'EX4 district', condition: { field: 'postcodeDistrict', operator: 'in', values: ['EX4'] }, points: 15 });
     expect(knowledgeBaseSchema.safeParse(kb).success).toBe(true);
     expect(scoreQuote(request('ex4 1aa'), kb).appliedFactors.map((f) => f.id)).toEqual(['district_ex4']);
