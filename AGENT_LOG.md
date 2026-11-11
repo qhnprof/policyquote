@@ -242,6 +242,26 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
 
 ---
 
+## Extra A — Auto-check hook (2026-11-11)
+- **Prompt:**
+  > Set up a Claude Code hook that checks the KB automatically whenever you edit it. Look up the current Claude Code hooks documentation first and follow its exact format.
+  > - In .claude/settings.json, add a PostToolUse hook for the file-editing tools (Edit and Write) that runs a small Node script: .claude/hooks/check-kb.js.
+  > - The script reads the hook's JSON from stdin and checks tool_input.file_path. If the edited file isn't kb/risk-kb.json, it exits 0 straight away. (Code edits are covered by the test run at the end of each task; running tests halfway through a refactor would just be noise.)
+  > - For KB edits it runs `npm --prefix backend run kb:validate`, then `npm --prefix backend test -- --silent`, from the project root (use the CLAUDE_PROJECT_DIR environment variable). Run them with child_process.execSync and a command string, so `npm` also resolves on Windows.
+  > - If either command fails, print its output to stderr and exit with code 2, so the output is fed back to you and you fix it. If both pass, exit 0.
+  > - Node built-ins only. Add one line about the hook to CLAUDE.md under "How to work".
+- **Output:**
+  - Checked the format against Claude Code's settings documentation (`update-config` skill): `hooks.PostToolUse[{ matcher: "Edit|Write", hooks: [{ type: "command", command, timeout }] }]`; stdin carries `tool_input.file_path`; for PostToolUse, exit 2 feeds stderr back to the agent; on Windows the command runs through bash when Git Bash is installed, so `"$CLAUDE_PROJECT_DIR"` expands (quoted, because the path contains a space).
+  - `check-kb.js`: compares paths after `path.resolve` (case-insensitive on Windows, either slash, relative paths allowed). A payload it can't parse exits 0, so the hook never blocks the agent because of its own bug. Falls back to the script's location if `CLAUDE_PROJECT_DIR` is unset. 120 s timeout.
+  - CLAUDE.md "How to work": one line saying the hook exists and that a reported failure must be fixed or reverted first.
+  - My first broken-KB pipe test wrongly passed (exit 0): my bash-built payload had invalid JSON escapes, so the hook took its "can't parse → don't block" branch. Rebuilt the payloads with `JSON.stringify` in a small harness.
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified:** pipe tests with real payloads → other file: exit 0 (0.3 s); valid KB: exit 0 (5.8 s); KB with `"greater"`: exit 2 with the validation error on stderr, for backslash, forward-slash and relative paths; KB restored (`git diff` empty). The exact settings command run through bash → exit 0.
+- **Still to do (live check):** this build session was started in the parent `aig/` folder, so Claude Code didn't load `policyquote/.claude/` (that's also why `/add-risk-factor` didn't appear). In a session opened in `policyquote/`: run `/hooks` to confirm the hook is listed, then ask: *"To test the hook, change the operator of property_value_high in kb/risk-kb.json to "greater"."* Record that exchange here (the hook's message and Claude reverting the KB).
+
+---
+
 ## 01 — <short title> (<date, time>)
 - **Prompt:**
   > _paste the exact prompt_

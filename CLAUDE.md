@@ -35,6 +35,7 @@ Home-insurance quoting app. An Angular frontend calls a Node Lambda-style backen
 
 ## How to work
 - Before engine, schema or cross-layer changes (backend + frontend), propose a short plan and wait for my approval. Routine KB edits that follow the `add-risk-factor` skill (KB entry + its test) don't need one.
+- A PostToolUse hook (`.claude/hooks/check-kb.js`) runs `kb:validate` and the backend tests after every edit to `kb/risk-kb.json`; if it reports a failure, fix or revert the KB before doing anything else.
 - Keep diffs small and focused. Don't refactor code outside the task.
 - Engine code is pure (no I/O). I/O lives only in `kb-loader.ts`, `handler.ts` and `server.ts`.
 - If a requirement is ambiguous, state your assumption in your reply instead of guessing silently.
