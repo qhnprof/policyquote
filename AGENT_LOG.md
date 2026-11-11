@@ -353,6 +353,35 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
 
 ---
 
+## 15 — Dockerfile (2026-11-11)
+- **Prompt:**
+  > Add a multi-stage backend/Dockerfile to run the backend as a Fargate service. The build context is the repo root so kb/ can be copied in.
+  > - Stage 1 (build): node:24-alpine, npm ci, npm run build.
+  > - Stage 2 (runtime): node:24-alpine, production dependencies only, the compiled dist/, kb/risk-kb.json copied to /app/kb with KB_PATH pointing at it, PORT 3000, run as the non-root node user, a HEALTHCHECK on GET /health, and CMD ["node", "dist/server.js"].
+  > - Add a .dockerignore at the repo root (node_modules, dist, .angular, .git).
+  > - Tell me the build and run commands.
+- **Output:** a two-stage `backend/Dockerfile` (`npm ci` + `tsc -p tsconfig.build.json`, then `npm ci --omit=dev` + `dist/` + the KB). The HEALTHCHECK uses Node's built-in `fetch`, so no curl/wget is needed. `.dockerignore` also excludes `data/raw`, `reports`, `frontend`, coverage and `.env*`.
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified (Docker Desktop 29.9.3):** `docker build -f backend/Dockerfile -t policyquote-api .` → 257 MB image. `docker run -p 3001:3000` (3000 was taken by the dev server) → `/health` `{status: ok, kbVersion: 1.1.1}`, a quote STANDARD £360/£30, `whoami` → `node`, `KB_PATH=/app/kb/risk-kb.json`, Docker health → `healthy`. Container removed afterwards.
+
+---
+
+## 16 — CI (2026-11-11)
+- **Prompt:**
+  > Add .github/workflows/ci.yml: on push and pull_request, Node 24, two jobs. backend (working-directory backend): npm ci, npm run typecheck, npm run kb:validate, npm test. frontend (working-directory frontend): npm ci, npm run build. Cache npm per folder.
+  > Also run npm run kb:validate -- --strict in the backend job. On pull requests, run the impact preview against the target branch's KB and append its --markdown output to $GITHUB_STEP_SUMMARY, so every KB change shows its impact on the pull request.
+- **Output:**
+  - Two jobs on Node 24 with `actions/checkout@v5` / `setup-node@v5`, npm cache keyed per folder's lock file, `permissions: contents: read`.
+  - Backend: `kb:validate -- --strict` (covers the plain validation too) and, on PRs, `kb:impact --base <target branch KB> --markdown >> $GITHUB_STEP_SUMMARY` (`fetch-depth: 0`; the base ref is passed via `env`, not interpolated into the script).
+  - If the target branch's KB can't be compared (e.g. a pre-`schemaVersion` KB), the summary gets a note rather than failing the job, because the candidate KB is already gated by the strict validation step.
+  - Addition: the frontend job also runs the Vitest suite (`npm test -- --watch=false`).
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified locally (GitHub Actions itself not run yet):** the YAML parses (PyYAML) with the expected steps; the PR step simulated with bash → "No differences" for an unchanged KB, a Markdown impact table with the flood proposal as candidate, and the fallback note when the base is the first commit's KB.
+
+---
+
 ## 01 — <short title> (<date, time>)
 - **Prompt:**
   > _paste the exact prompt_

@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (typecheck, KB, tests, impact)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # the impact preview reads the target branch's KB
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - run: npm ci
+      - run: npm run typecheck
+      - name: Validate and lint the KB (warnings fail in strict mode)
+        run: npm run kb:validate -- --strict
+      - run: npm test
+
+      - name: KB impact preview against the target branch
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          base_kb="$RUNNER_TEMP/base-kb.json"
+          if git show "origin/$BASE_REF:kb/risk-kb.json" > "$base_kb" 2>/dev/null; then
+            npm run --silent kb:impact -- --base "$base_kb" --markdown >> "$GITHUB_STEP_SUMMARY" \
+              || echo "_Impact preview unavailable: the target branch's KB could not be compared (see the job log)._" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "_No KB on \`$BASE_REF\` to compare against._" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  frontend:
+    name: Frontend (build, tests)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm test -- --watch=false
