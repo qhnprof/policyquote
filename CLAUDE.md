@@ -10,7 +10,7 @@ Home-insurance quoting app. An Angular frontend calls a Node Lambda-style backen
 
 ## Map (read only what the task needs)
 - `kb/risk-kb.json`: the knowledge base (base premium, coverage load factor, risk bands with multipliers and summaries, factors).
-- `kb/README.md`: schema and operator reference, written alongside `kb.schema.ts`. Until it exists, use the KB quick reference below.
+- `kb/README.md`: schema and operator reference. `kb.schema.ts` must match it.
 - `backend/src/handler.ts`: Lambda entry `handler(event, context)`. HTTP shape + validation only.
 - `backend/src/server.ts`: local HTTP adapter used by `npm start` (also serves `GET /health`).
 - `backend/src/validation/quote-request.schema.ts`: Zod request schema.
@@ -43,6 +43,7 @@ Home-insurance quoting app. An Angular frontend calls a Node Lambda-style backen
 - Factor: `{ id, description, condition, points, perOccurrence? }`. `description` is customer-facing (shown in the UI).
 - Condition: a leaf `{ field, operator, value | values | min+max }`, or a combinator `{ all: [...] }`, `{ any: [...] }`, `{ not: {...} }`.
 - `perOccurrence: true` means points × the numeric value of the condition's field (leaf conditions only).
-- Band: `{ min, max?, multiplier, summary }`. Bounds are inclusive integers (scores are integer sums). Only the highest band may omit `max` (open-ended), so every score ≥ 0 lands in exactly one band. `summary` is customer-facing.
-- Pricing: `premium = basePremium × coverageLoadFactor × band.multiplier`.
+- Band: `{ min, max, multiplier, summary }`. Bounds are inclusive integers (scores are integer sums); bands start at 0 with no gaps or overlaps. A score above the top band's `max` goes in the top band (the band with the highest `min`, never chosen by name). `summary` is customer-facing.
+- Pricing: `annualPremium = basePremium × band.multiplier × coverageLoadFactor`, rounded to 2 dp; `monthlyPremium = annualPremium / 12`, rounded to 2 dp.
+- Top level also has `schemaVersion` (file shape, currently `1`) and `version` (rules, returned as `kbVersion`).
 - To add, change or remove a factor, follow the `add-risk-factor` skill.

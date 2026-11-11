@@ -1,11 +1,27 @@
 {
-  "version": "1.0.0",
+  "schemaVersion": 1,
+  "version": "1.1.0",
   "basePremium": 300,
   "coverageLoadFactor": 1.2,
   "riskBands": {
-    "STANDARD": { "min": 0, "max": 25, "multiplier": 1.0, "summary": "Standard risk — no extra loading" },
-    "ELEVATED": { "min": 26, "max": 60, "multiplier": 1.5, "summary": "Elevated risk — premium loaded by 50%" },
-    "HIGH_RISK": { "min": 61, "multiplier": 2.0, "summary": "High risk — premium doubled" }
+    "STANDARD": {
+      "min": 0,
+      "max": 25,
+      "multiplier": 1.0,
+      "summary": "Your details fall within our standard risk range."
+    },
+    "ELEVATED": {
+      "min": 26,
+      "max": 60,
+      "multiplier": 1.5,
+      "summary": "Some of your details raise the risk above our standard range."
+    },
+    "HIGH_RISK": {
+      "min": 61,
+      "max": 999,
+      "multiplier": 2.2,
+      "summary": "Several of your details place this quote in our highest risk range."
+    }
   },
   "factors": [
     {
@@ -39,6 +55,17 @@
       "description": "Property value over £750,000",
       "condition": { "field": "propertyValue", "operator": "gt", "value": 750000 },
       "points": 25
+    },
+    {
+      "id": "flat_high_value",
+      "description": "Flat valued over £500,000 — high-value shared building",
+      "condition": {
+        "all": [
+          { "field": "propertyType", "operator": "eq", "value": "Flat" },
+          { "field": "propertyValue", "operator": "gt", "value": 500000 }
+        ]
+      },
+      "points": 35
     }
   ]
 }

@@ -9,7 +9,7 @@ description: Add, change or remove a risk factor in the PolicyQuote knowledge ba
 
 ## Steps
 
-1. **Read** `kb/README.md` (schema and operators) and `kb/risk-kb.json`. If the README doesn't exist yet, use the KB quick reference in `CLAUDE.md` instead. Don't open engine files unless step 3 applies.
+1. **Read** `kb/README.md` (schema and operators) and `kb/risk-kb.json`. Don't open engine files unless step 3 applies.
 
 2. **Translate the request into a KB entry:**
    - `id`: snake_case, unique, descriptive (e.g. `flood_zone_postcode`).
