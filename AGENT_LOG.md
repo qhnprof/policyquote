@@ -102,6 +102,22 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
 
 ---
 
+## 08 — Lambda handler and local server (2026-11-11)
+- **Prompt:**
+  > Implement backend/src/handler.ts and backend/src/server.ts. Plan first.
+  > handler.ts: export async function handler(event, context). Type the parameters as the subset we use: Pick<APIGatewayProxyEvent, 'httpMethod' | 'headers' | 'body'> and Pick<Context, 'awsRequestId'> (from @types/aws-lambda). A real Lambda event still fits, and tests and the local server can build one without casts. OPTIONS → 204. Any method other than POST → 405. Invalid JSON → 400 { error: "INVALID_JSON" }. Zod failure → 400 { error: "VALIDATION_ERROR", issues: [{ path, message }] }. Success → 200 with the QuoteResult as JSON. Unexpected error → 500 { error: "INTERNAL_ERROR", requestId }, logged with console.error. Never put a stack trace in the response. Every response has a JSON content-type and CORS headers. Get the KB from loadKnowledgeBase(), which is cached.
+  > server.ts: a small node:http adapter (no Express). PORT from env, default 3000. GET /health → { status: "ok", kbVersion }. POST or OPTIONS /policy/quote → build the event, call handler, write statusCode, headers and body. Anything else → 404. On start, log the port and the KB version.
+  > test/handler.test.ts: 200 happy path (check the response shape), 400 validation error, 400 invalid JSON, 405 for GET.
+- **Output:**
+  - `handler.ts`: one `respond()` helper adds the JSON + CORS headers to every response; the 405 also sends `Allow: POST, OPTIONS`. A missing body (`null`) counts as invalid JSON.
+  - `server.ts`: repeated Node headers (`string[]`) are joined into one string, not cast. 1 MB body limit → 413. Server-level errors → 500 with a request id. Invalid `PORT` → error. It loads the KB before listening, so an invalid KB stops the server, and `tsx watch` restarts it once the KB is fixed. `createAppServer()` is exported; it only listens when run directly.
+  - `test/handler.test.ts`: the 4 required cases plus an OPTIONS 204, `null`/empty bodies, and a 500 using an invalid fixture KB, asserting no stack trace or KB detail leaks into the body.
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified:** `npm run typecheck` clean; `npm test` → 119 passed; `npm run kb:validate` → `KB v1.1.0 valid (6 factors)`; step-07 grep still finds nothing. Live: `npm start` logged `PolicyQuote API listening on http://localhost:3000 (KB v1.1.0, 6 factors)`. The step's PowerShell request → `riskBand: STANDARD`, `annualPremium: 360`, `monthlyPremium: 30`, `kbVersion: 1.1.0`; `/health` → `{ status: ok, kbVersion: 1.1.0 }`; `/nope` → 404; bad JSON → 400 `INVALID_JSON`. `npm run build` + `node dist/kb/validate-kb.js` → valid (the KB path resolves from `dist/` too).
+
+---
+
 ## 01 — <short title> (<date, time>)
 - **Prompt:**
   > _paste the exact prompt_
