@@ -1,1 +1,156 @@
-/* You can add global styles to this file, and also import other style files */
+/* Design tokens. Components use these custom properties, never raw colours or sizes. */
+:root {
+  --color-bg: #f3f5f8;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1f4f9;
+  --color-border: #d9dfe7;
+  --color-border-strong: #a9b4c2;
+  --color-text: #17202c;
+  --color-text-muted: #556274;
+  --color-primary: #13315c;
+  --color-primary-hover: #0c2242;
+  --color-on-primary: #ffffff;
+  --color-focus: #2f6fdf;
+  --color-error: #b42318;
+  --color-error-bg: #fef1f0;
+  --color-disabled-bg: #c5ced9;
+
+  --band-standard-bg: #e8f5ec;
+  --band-standard-border: #a8d8b5;
+  --band-standard-fg: #1b5e33;
+  --band-elevated-bg: #fff4dc;
+  --band-elevated-border: #f0cd85;
+  --band-elevated-fg: #7a4b00;
+  --band-high-bg: #fdeceb;
+  --band-high-border: #f2b0ab;
+  --band-high-fg: #9f1d14;
+  --band-neutral-bg: #eef1f5;
+  --band-neutral-border: #c8d0db;
+  --band-neutral-fg: #3c4858;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.625rem;
+  --text-3xl: 2.5rem;
+
+  --shadow-panel: 0 1px 2px rgb(23 32 44 / 6%), 0 4px 16px rgb(23 32 44 / 6%);
+  --focus-ring: 0 0 0 3px var(--color-surface), 0 0 0 5px var(--color-focus);
+  --content-width: 72rem;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  line-height: 1.2;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* One visible focus style for every interactive element, keyboard only. */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.container {
+  width: 100%;
+  max-width: var(--content-width);
+  margin-inline: auto;
+  padding-inline: var(--space-4);
+}
+
+.panel {
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: var(--space-3) var(--space-6);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.button-primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.button-primary:disabled {
+  background: var(--color-disabled-bg);
+  cursor: not-allowed;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 720px) {
+  .panel {
+    padding: var(--space-5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

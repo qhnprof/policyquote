@@ -1,1 +1,38 @@
-<p>{{ quote().riskBand }}: £{{ quote().monthlyPremium }} a month</p>
+@let q = quote();
+<article class="quote-result">
+  <header class="result-header">
+    <h3 class="result-title">Your quote</h3>
+    <app-risk-band-badge [riskBand]="q.riskBand" />
+  </header>
+
+  <div class="premium">
+    <p class="premium-monthly">
+      <span class="premium-amount">{{ q.monthlyPremium | currency: 'GBP' }}</span>
+      <span class="premium-period">a month</span>
+    </p>
+    <p class="premium-annual">{{ q.annualPremium | currency: 'GBP' }} a year</p>
+  </div>
+
+  <dl class="score">
+    <dt>Risk score</dt>
+    <dd>{{ q.riskScore }}</dd>
+  </dl>
+
+  <p class="summary">{{ q.riskSummary }}</p>
+
+  <h4 class="factors-title">Risk factors</h4>
+  @if (q.appliedFactors.length > 0) {
+    <ul class="factors">
+      @for (factor of q.appliedFactors; track factor.id) {
+        <li class="factor">
+          <span class="factor-description">{{ factor.description }}</span>
+          <span class="factor-points">+{{ factor.points }} pts</span>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="no-factors">No risk factors applied</p>
+  }
+
+  <p class="kb-version">Rules version {{ q.kbVersion }}</p>
+</article>

@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import type { QuoteResponse } from '../../models/quote.models';
 import { GENERIC_ERROR_MESSAGE } from '../../services/quote.service';
 import { DRAFT_STORAGE_KEY, QuotePageComponent } from './quote-page.component';
 
@@ -73,7 +74,17 @@ describe('QuotePageComponent', () => {
 
     const call = http.expectOne('/policy/quote');
     expect(call.request.body).toMatchObject({ customerName: 'Jane Doe', age: 40, postcode: 'sw1a 1aa' });
-    call.flush({ riskBand: 'STANDARD', monthlyPremium: 30 });
+    const quote: QuoteResponse = {
+      monthlyPremium: 30,
+      annualPremium: 360,
+      riskBand: 'STANDARD',
+      riskScore: 0,
+      riskSummary: 'Your details fall within our standard risk range. No additional risk factors.',
+      coverageDetails: { propertyType: 'House', propertyValue: 300000, basePremium: 300, coverageLoadFactor: 1.2, riskMultiplier: 1 },
+      appliedFactors: [],
+      kbVersion: '1.1.0',
+    };
+    call.flush(quote);
     await fixture.whenStable();
 
     expect(element.querySelector('app-quote-result')?.textContent).toContain('STANDARD');

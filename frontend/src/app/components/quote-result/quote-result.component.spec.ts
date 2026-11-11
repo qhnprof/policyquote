@@ -37,8 +37,31 @@ describe('QuoteResultComponent', () => {
     element = fixture.nativeElement;
   });
 
-  it('renders the quote it is given', async () => {
+  it('shows premiums in GBP, the badge, score, summary and KB version', async () => {
     await render(quote);
-    expect(element.textContent).toContain('ELEVATED');
+    expect(element.querySelector('.premium-amount')?.textContent).toBe('£45.00');
+    expect(element.querySelector('.premium-annual')?.textContent).toContain('£540.00');
+    expect(element.querySelector('app-risk-band-badge')?.textContent).toContain('ELEVATED');
+    expect(element.querySelector('.score dd')?.textContent).toBe('30');
+    expect(element.querySelector('.summary')?.textContent).toBe(quote.riskSummary);
+    expect(element.querySelector('.kb-version')?.textContent).toContain('1.1.0');
+  });
+
+  it('lists each applied factor with its points', async () => {
+    await render(quote);
+    const items = Array.from(element.querySelectorAll('.factor'), (item) => [
+      item.querySelector('.factor-description')?.textContent,
+      item.querySelector('.factor-points')?.textContent,
+    ]);
+    expect(items).toEqual([
+      ['Under 25 or over 75 — higher risk profile', '+20 pts'],
+      ['Flat — higher shared risk', '+10 pts'],
+    ]);
+  });
+
+  it('says so when no factors apply', async () => {
+    await render({ ...quote, appliedFactors: [] });
+    expect(element.querySelector('.factors')).toBeNull();
+    expect(element.querySelector('.no-factors')?.textContent).toBe('No risk factors applied');
   });
 });

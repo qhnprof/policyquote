@@ -116,7 +116,9 @@
     </form>
   </section>
 
-  <section class="panel result-panel" aria-labelledby="quote-result-title">
+  <!-- aria-live sits on this always-present region: the result component itself appears and
+       disappears with @if, and a live region that arrives with its content is often not announced. -->
+  <section class="panel result-panel" aria-labelledby="quote-result-title" aria-live="polite">
     <h2 id="quote-result-title" class="visually-hidden">Your quote</h2>
     @if (errorMessage(); as message) {
       <p class="alert" role="alert">{{ message }}</p>
