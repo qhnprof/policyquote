@@ -402,12 +402,26 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
 
 ---
 
-## 01 — <short title> (<date, time>)
-- **Prompt:**
-  > _paste the exact prompt_
-- **Output:** _files created or changed, plus a 1–3 line summary of the approach_
-- **Accepted / changed / rejected:** _what you kept, what you edited by hand, what you told the agent to redo_
-- **Why:** _your reasoning: the rule it broke, the bug you spotted, the simpler design you preferred_
-- **Verified:** _commands run and their result (e.g. `npm test`: 24 passed)_
+## 17 — README, SOLUTION and the log (2026-11-11)
+- **Prompt:** Prompt 11: root README.md (under 120 lines: overview, prerequisites, run in 4 commands, the KB and an "add a factor" example, tests and KB tools, example request/response, structure, agent setup, Docker); write SOLUTION.md yourself (≤ 300 words); make sure AGENT_LOG covers every step with real rejections.
+- **Output:**
+  - README.md, 110 lines. The example response is a real response captured from the running API, not hand-written. It documents `kb:validate` (+ linter), `kb:impact` and `kb:suggest-flood`, the hook, and Docker (tested).
+  - AGENT_LOG: added entries for 01–03 (setup) and 09 (rehearsal, marked as not yet run, not invented); replaced the empty template block with 17 and 18.
+  - SOLUTION.md: **not written by the agent**, because the guide says to write it yourself. The agent left a 245-word draft outside the repo for me to rewrite in my own words.
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified:** README is 110 lines; its links resolve (`kb/README.md#data-sources-and-proposals`).
+
+---
+
+## 18 — Final self-check (2026-11-11)
+- **Prompt:** fresh clone, install, test, start both services, get a quote; the three searches must be empty; the checklist.
+- **Output (run by the agent; the clone was made from the local repo, not GitHub, because the latest commits weren't pushed yet):**
+  - Searches: `: any` / `as any` / `<any>` in `backend/src` + `frontend/src/app` → none; `Subject` in `frontend/src` → none; `switch (` in `backend/src` → none.
+  - Fresh clone (109 tracked files, no `data/raw`): `npm --prefix backend install` + `npm --prefix frontend install` OK; `npm --prefix backend test` → 9 suites, 155 tests passed; `kb:validate` → valid, 0 warnings, 1 note; `kb:impact` → "No differences".
+  - Both services started with `npm --prefix … start`: `/health` via the 4200 proxy → `{status: ok, kbVersion: 1.1.1}`; the four example profiles → ELEVATED £45, STANDARD £30, HIGH_RISK £66, STANDARD £30; Chrome shows the cards and headline.
+- **Still to do by me:** run step 09 and the hook live check in a session opened in `policyquote/`; write SOLUTION.md; fill in "Accepted / Why"; push, then repeat the clone from GitHub.
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
 
 <!-- Copy the block above for each step. Write it right after the step while it's fresh. Never invent entries. -->
