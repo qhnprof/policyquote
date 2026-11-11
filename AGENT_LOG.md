@@ -143,6 +143,37 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
 
 ---
 
+## 10 — Create the Angular app (2026-11-11)
+- **Prompt:** commands only, from the guide: `npx @angular/cli@22 new frontend --style=css --ssr=false --routing=false --zoneless --ai-config=none --file-name-style-guide=2016 --commit=false`; `ng g c components/quote-page|quote-result|risk-band-badge --add-type-to-class-name`; `ng g s services/quote --add-type-to-class-name`; `proxy.conf.json` for `/policy` and `/health` → `localhost:3000`; `"start": "ng serve --proxy-config proxy.conf.json"`.
+- **Output:**
+  - Angular CLI 22.2.6 / Angular 22.2.5 on Node 24.22.2, TypeScript 6.0.3. The usage-data prompt was answered N via `NG_CLI_ANALYTICS=false`.
+  - No nested git repo was created (`frontend/.git` doesn't exist).
+  - Angular 22 generates services with the new `@Service()` decorator (auto-provided at root; kept).
+  - `tsconfig.json` has no `strict` flag; I checked that TypeScript 6 enables strict mode by default (a probe file gave `TS7006` implicit any and `TS2322` null → number).
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified:** `npm start` → `Local: http://localhost:4200/`; GET returned 200 with the placeholder page (`<title>Frontend</title>`); server stopped.
+
+---
+
+## 11 — Models and QuoteService (2026-11-11)
+- **Prompt:**
+  > Frontend step. Read backend/src/types.ts and backend/src/validation/quote-request.schema.ts first.
+  > 1. frontend/src/app/models/quote.models.ts: QuoteRequest, QuoteResponse, AppliedFactor and CoverageDetails interfaces that match the backend exactly. riskBand is a string because bands come from the KB.
+  > 2. frontend/src/app/services/quote.service.ts (QuoteService): inject HttpClient; requestQuote(request): Observable<QuoteResponse> posts to /policy/quote (relative URL, the dev server proxies it). Map HTTP errors to a readable message: for 400 VALIDATION_ERROR, join the issue messages; for anything else, "We couldn't get a quote right now. Please try again."
+  > 3. Register provideHttpClient(withFetch()) in src/app/app.config.ts.
+  > No `any`. Run npm run build.
+- **Output:**
+  - `quote.models.ts`: the four interfaces, plus `PROPERTY_TYPES` (for the form's select) and `ValidationErrorResponse`.
+  - `quote.service.ts`: `requestQuote` turns any HTTP error into a `QuoteRequestError` whose message is safe to show; `toReadableMessage` checks the 400 body with a type guard (no `any`, no cast) and joins the messages with `; `.
+  - **Deviation:** `provideHttpClient()` without `withFetch()`. In Angular 22, `withFetch` is `@deprecated` ("not required anymore. `FetchBackend` is the default"), so the app still uses fetch; there's a comment in `app.config.ts`.
+  - Rewrote the generated `quote.service.spec.ts`, which would have failed without an HttpClient provider: POST + body, 400 validation → joined messages, other 400 → generic, 500 → generic.
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified:** `npm run build` → bundle generated, no errors; `ng test --watch=false` (Vitest) → 5 files, 9 tests passed.
+
+---
+
 ## 01 — <short title> (<date, time>)
 - **Prompt:**
   > _paste the exact prompt_
