@@ -202,6 +202,46 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
 
 ---
 
+## 13 — Result view, badge and styling (2026-11-11)
+- **Prompt:**
+  > Implement the result view and styling.
+  > 1. RiskBandBadgeComponent: riskBand = input.required<string>(). computed() label (HIGH_RISK → "HIGH RISK") and computed() CSS modifier class: green for STANDARD, amber for ELEVATED, red for HIGH_RISK, and a neutral style for any other band, so a new KB band still renders.
+  > 2. QuoteResultComponent: quote = input.required<QuoteResponse>(). Show the monthly and annual premium (CurrencyPipe, GBP), the badge, riskScore, riskSummary, and the applied factors from appliedFactors (description + "+N pts") with @for, or "No risk factors applied" when empty. Show the KB version in small text. Make the result region aria-live="polite".
+  > 3. Styling: hand-written CSS only (no UI libraries). CSS custom properties for colours and spacing in src/styles.css; form and result side by side on desktop, stacked under 720px; visible focus states; clean and professional.
+  > Run npm run build and fix any errors.
+- **Output:**
+  - Badge: `label` = `riskBand` with `_` → space; `modifierClass` from a band → class map, defaulting to `badge--neutral` (spec checks `VERY_HIGH_RISK` → neutral). Includes a visually hidden "Risk band:" prefix for screen readers.
+  - Result: `@let q = quote()`; `CurrencyPipe` GBP; score, summary, a factor list or "No risk factors applied", "Rules version x.y.z".
+  - `aria-live="polite"` is on the result *panel* in `quote-page`, not inside `QuoteResultComponent`, because that component appears and disappears with `@if`, and a live region that arrives with its content is often not announced. There's a comment in the template.
+  - `styles.css`: design tokens (colours, band colours, spacing, radii, type scale, focus ring) and a single `:focus-visible` rule; a grid layout that stacks under 720px (and field pairs stack under 480px); `prefers-reduced-motion` respected.
+  - The first test run had 2 failures, both in test data: a partial mock response (the full template now reads `appliedFactors.length`), and a text assertion that assumed whitespace between spans, which Angular strips. Fixed the tests, not the components.
+  - The browser check found the tab title "Frontend"; changed it to "PolicyQuote — Home insurance quote".
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified:** `npm run build` clean; `ng test --watch=false` → 18 passed (badge 4, result 3, page 6, service 4, app 1). Looked at it in Chrome at 1280px and 600px (see 14).
+
+---
+
+## 14 — End-to-end check (2026-11-11)
+- **Prompt:** the guide's checklist, run in Chrome (Claude in Chrome) against `npm --prefix backend start` + `npm --prefix frontend start`. (A first attempt with the Playwright MCP stalled and was stopped; the user had also checked by hand.)
+- **Output (all as expected):**
+  - 40, House, £300,000, SW1A 1AA, 0 claims → STANDARD (green) · £30.00/mo · £360.00/yr · score 0 · "No risk factors applied".
+  - 22, Flat, £250,000, 0 claims → ELEVATED (amber) · £45.00 · £540.00 · score 30 · 2 factors (+20, +10).
+  - 40, House, £800,000, 3 claims → HIGH RISK (red) · £66.00 · £792.00 · score 115 · 2 factors (+90, +25).
+  - Age 15, then Tab → red border and "Enter an age between 18 and 120, in whole years."; button disabled; focus ring visible on the next field.
+  - Backend stopped, then submit → "We couldn't get a quote right now. Please try again."; no crash, button re-enabled.
+  - Configurability: `previous_claims_low` 15 → 20 in `kb/risk-kb.json`; the backend restarted by itself; 1 claim → score 20, "+20 pts". Reverted (`git diff -- kb/` empty); the API gave 15 again.
+  - Width 600px → stacked layout, result below the form.
+  - Draft: on first load the form held the user's earlier values with the name empty, as designed.
+- **Observations, not changed:**
+  - After a quote, editing the form leaves the old quote visible until the next submit (e.g. age 15 with a HIGH RISK quote still showing).
+  - The console check started after page load, so it only proves there were no errors during the later interactions.
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified:** screenshots in Chrome for every row above; KB revert confirmed with `git diff` and a live API call.
+
+---
+
 ## 01 — <short title> (<date, time>)
 - **Prompt:**
   > _paste the exact prompt_
