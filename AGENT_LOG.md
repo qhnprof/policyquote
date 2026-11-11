@@ -450,7 +450,7 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
   - Addition: the frontend job also runs the Vitest suite (`npm test -- --watch=false`).
 - **Accepted / changed / rejected:** Accepted, including the frontend test step it added.
 - **Why:** CI runs the same checks as my machine, and strict KB validation stops a bad KB before it is merged. The impact preview on pull requests shows reviewers the business effect of each rule change.
-- **Verified locally (GitHub Actions itself not run yet):** the YAML parses (PyYAML) with the expected steps; the PR step simulated with bash → "No differences" for an unchanged KB, a Markdown impact table with the flood proposal as candidate, and the fallback note when the base is the first commit's KB.
+- **Verified:** first locally: the YAML parses (PyYAML) with the expected steps; the PR step simulated with bash → "No differences" for an unchanged KB, a Markdown impact table with the flood proposal as candidate, and the fallback note when the base is the first commit's KB. Then on GitHub (2026-11-11): the first run, on the push of cfc8627, passed both jobs (backend 16 s, frontend 24 s), and the frontend job's summary shows the Vitest report (6 files, 23 tests). The impact step only runs on pull requests, so it hasn't run on GitHub yet.
 
 ---
 
@@ -473,8 +473,9 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
   - Fresh clone (109 tracked files, no `data/raw`): `npm --prefix backend install` + `npm --prefix frontend install` OK; `npm --prefix backend test` → 9 suites, 155 tests passed; `kb:validate` → valid, 0 warnings, 1 note; `kb:impact` → "No differences".
   - Both services started with `npm --prefix … start`: `/health` via the 4200 proxy → `{status: ok, kbVersion: 1.1.1}`; the four example profiles → ELEVATED £45, STANDARD £30, HIGH_RISK £66, STANDARD £30; Chrome shows the cards and headline.
 - **Still open after this step:** step 09 and the hook live check (entries 09 and Extra A); SOLUTION.md and the "Accepted / Why" write-up (entry 19); a fresh clone from GitHub after pushing.
-- **Accepted / changed / rejected:** Accepted. I repeat the fresh clone from GitHub after pushing.
+- **Accepted / changed / rejected:** Accepted. I repeated the fresh clone from GitHub after pushing (below).
 - **Why:** A clean clone is how the reviewers will meet the project, so it's the check that matters most.
+- **After pushing (2026-11-11), run by Claude (chat):** a fresh clone from GitHub at cfc8627 (110 tracked files, no `data/raw`). Backend: `npm ci`, typecheck clean, strict validation v1.1.1 with 0 warnings, 156 tests passed, `kb:impact` → "No differences", and the started API returned a quote (Coastal home, STANDARD £30). Frontend: `npm ci`, build clean, 23 tests passed.
 
 ---
 
