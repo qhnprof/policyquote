@@ -84,6 +84,24 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
 
 ---
 
+## 07 — Scoring and pricing (2026-11-11)
+- **Prompt:**
+  > Implement pure scoring and pricing in backend/src/engine/score-quote.ts. Plan first.
+  > scoreQuote(input: QuoteRequest, kb: KnowledgeBase): QuoteResult — for each factor in KB order: if its condition applies, points = factor.points, or factor.points × the numeric value of the condition's field when perOccurrence is true (throw if that value isn't a number). Collect appliedFactors as { id, description, points }. riskScore = sum of applied points. Band = the KB band where min ≤ score ≤ max; a score above the top band's max goes in the top band. annualPremium = basePremium × band multiplier × coverageLoadFactor, rounded to 2 dp. monthlyPremium = annualPremium / 12, rounded to 2 dp. Do all rounding in one helper. riskSummary = the band's KB summary plus the applied factor descriptions, or "No additional risk factors." when none apply. No sentences about specific factors in code. coverageDetails = { propertyType, propertyValue, basePremium, coverageLoadFactor, riskMultiplier }. Define QuoteResult in backend/src/types.ts. No KB numbers, band names or factor ids may appear in this file.
+  > Tests in test/score-quote.test.ts, using the real KB and postcode "SW1A 1AA": [the six-row table: standard, standard boundary, elevated, elevated boundary, compound, high risk]. Also: band resolution tests for scores 25, 26, 60 and 61; a "KB-only change" test: load test/fixtures/kb-with-extra-factor.json (the real KB plus one extra factor) and show the new factor applies with no code change.
+- **Output:**
+  - `types.ts` (`QuoteResult`, `AppliedFactor`, `CoverageDetails`).
+  - `score-quote.ts`: `scoreQuote`, `resolveBand` (exported for the band tests; overflow goes to the band with the highest `min`, never chosen by name), `roundToPence` (the only rounding; `Number.EPSILON` so 1.005 → 1.01).
+  - Risk summary format: `<band summary> Factors: <description>; <description>.`, or `<band summary> No additional risk factors.`
+  - Fixture `kb-with-extra-factor.json`: the real KB + `coastal_postcode` (TR/TQ, 10 points), version 1.2.0. Deliberately not the EX/PL flood rule, which is saved for step 09.
+  - Extra tests: applied-factor order and per-occurrence points, the compound factor's negative cases, summary text, coverage details, overflow (score 1000), negative score throws, non-numeric perOccurrence throws, rounding.
+  - A grep for band names found one in a doc comment in `types.ts`; reworded it.
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified:** `npm run typecheck` clean; `npm test` → 111 passed (all six table rows); `npm run kb:validate` → `KB v1.1.0 valid (6 factors)`. `git grep --untracked -nwE "1\.5|2\.2|300|750000|500000" -- src` → nothing found (`--untracked` because the new files weren't committed yet; a plain `git grep` would have passed without searching them). A grep for band names and factor ids in `src` → nothing found after the comment fix.
+
+---
+
 ## 01 — <short title> (<date, time>)
 - **Prompt:**
   > _paste the exact prompt_
