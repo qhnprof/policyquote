@@ -2,9 +2,16 @@ import { z } from 'zod';
 import type { ConditionInput } from '../engine/evaluate-condition';
 import { assessRisk, resolveBand } from '../engine/score-quote';
 import {
+  DERIVED_POSTCODE_SOURCE,
+  derivePostcodeFields,
+  isDerivedPostcodeField,
+  SAMPLE_POSTCODE_FOR,
+} from '../validation/postcode';
+import {
   QUOTE_REQUEST_FIELDS,
   quoteRequestFieldSchema,
   quoteRequestSchema,
+  type ConditionField,
   type QuoteRequestField,
 } from '../validation/quote-request.schema';
 import type { Condition, Factor, KnowledgeBase, LeafCondition } from './kb.schema';
@@ -31,8 +38,32 @@ export const MAX_PROBE_COMBINATIONS = 200_000;
 /** A value for fields no rule reads; it must never matter. */
 const UNUSED_FIELD_PLACEHOLDER = 'probe';
 
-/** Every request field → any value. Exhaustive over the field enum, so it types a probe input without a cast. */
-const probeInputSchema = z.record(quoteRequestFieldSchema, z.unknown());
+/** Every request field → any value. Exhaustive over the field enum, so it types a probe request without a cast. */
+const probeRequestSchema = z.record(quoteRequestFieldSchema, z.unknown());
+
+const isRequestField = (field: ConditionField): field is QuoteRequestField =>
+  QUOTE_REQUEST_FIELDS.some((requestField) => requestField === field);
+
+/**
+ * The request field whose probes cover a condition field. Derived postcode fields are probed
+ * through `postcode`, so area, district and postcode always agree in a probe.
+ */
+const probedFieldFor = (field: ConditionField): QuoteRequestField =>
+  isRequestField(field) ? field : DERIVED_POSTCODE_SOURCE;
+
+/** The leaf's literals, as values of its probed field (a district "EX4" becomes the postcode "EX4 1AA"). */
+function probeLiteralsOf(leaf: LeafCondition): unknown[] {
+  const literals = literalsOf(leaf);
+  const { field } = leaf;
+  if (!isDerivedPostcodeField(field)) return literals;
+  return literals.filter((value): value is string => typeof value === 'string').map(SAMPLE_POSTCODE_FOR[field]);
+}
+
+/** The engine input for a probe: the request values plus the postcode fields derived from them. */
+function toProbeInput(request: Record<QuoteRequestField, unknown>): ConditionInput {
+  const postcode = request[DERIVED_POSTCODE_SOURCE];
+  return { ...request, ...derivePostcodeFields(typeof postcode === 'string' ? postcode : '') };
+}
 
 function leavesOf(condition: Condition): LeafCondition[] {
   if ('all' in condition) return condition.all.flatMap(leavesOf);
@@ -95,19 +126,18 @@ function* combinations(
   }
 }
 
-const describeInput = (probe: Probe, fields: readonly QuoteRequestField[]): string =>
+const describeInput = (probe: Probe, fields: readonly ConditionField[]): string =>
   fields.map((field) => `${field} = ${JSON.stringify(probe.input[field])}`).join(', ');
 
 export function lintKnowledgeBase(kb: KnowledgeBase): LintFinding[] {
   const findings: LintFinding[] = [];
   const leavesByFactor = new Map(kb.factors.map((factor) => [factor.id, leavesOf(factor.condition)]));
-  const usedFields = QUOTE_REQUEST_FIELDS.filter((field) =>
-    [...leavesByFactor.values()].some((leaves) => leaves.some((leaf) => leaf.field === field)),
-  );
+  const allLeaves = [...leavesByFactor.values()].flat();
+  const usedFields = QUOTE_REQUEST_FIELDS.filter((field) => allLeaves.some((leaf) => probedFieldFor(leaf.field) === field));
 
   const probeValues = new Map<QuoteRequestField, unknown[]>();
   for (const field of usedFields) {
-    const literals = [...leavesByFactor.values()].flat().filter((leaf) => leaf.field === field).flatMap(literalsOf);
+    const literals = allLeaves.filter((leaf) => probedFieldFor(leaf.field) === field).flatMap(probeLiteralsOf);
     probeValues.set(field, probesFor(field, literals));
   }
 
@@ -123,9 +153,11 @@ export function lintKnowledgeBase(kb: KnowledgeBase): LintFinding[] {
 
   const probes: Probe[] = [];
   for (const combo of combinations(usedFields, probeValues)) {
-    const input: ConditionInput = probeInputSchema.parse(
-      Object.fromEntries(
-        QUOTE_REQUEST_FIELDS.map((field) => [field, combo.has(field) ? combo.get(field) : UNUSED_FIELD_PLACEHOLDER]),
+    const input = toProbeInput(
+      probeRequestSchema.parse(
+        Object.fromEntries(
+          QUOTE_REQUEST_FIELDS.map((field) => [field, combo.has(field) ? combo.get(field) : UNUSED_FIELD_PLACEHOLDER]),
+        ),
       ),
     );
     const { appliedFactors, riskScore } = assessRisk(input, kb);
@@ -169,7 +201,7 @@ export function lintKnowledgeBase(kb: KnowledgeBase): LintFinding[] {
 
     // Gaps are only meaningful along one numeric field.
     const [field] = groupFields;
-    if (groupFields.length === 1 && field !== undefined && quoteRequestSchema.shape[field] instanceof z.ZodNumber) {
+    if (groupFields.length === 1 && field !== undefined && isRequestField(field) && quoteRequestSchema.shape[field] instanceof z.ZodNumber) {
       const coverage = (probeValues.get(field) ?? []).map((value) => ({
         value,
         covered: probes.some((p) => p.input[field] === value && ids.some((id) => p.applied.has(id))),
@@ -223,7 +255,8 @@ export function lintKnowledgeBase(kb: KnowledgeBase): LintFinding[] {
   return findings;
 }
 
-function describeLimits(field: QuoteRequestField): string {
+function describeLimits(field: ConditionField): string {
+  if (!isRequestField(field)) return '';
   const schema = quoteRequestSchema.shape[field];
   if (!(schema instanceof z.ZodNumber)) return '';
   return `${field} ${schema.minValue ?? '-∞'}–${schema.maxValue ?? '∞'}`;

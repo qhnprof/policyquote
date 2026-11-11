@@ -6,3 +6,7 @@ coverage/
 .env
 .env.*
 .DS_Store
+
+# Large open-data downloads and generated reports (only small derived files are committed)
+data/raw/
+reports/

@@ -16,7 +16,7 @@ description: Add, change or remove a risk factor in the PolicyQuote knowledge ba
    - `description`: plain English and customer-facing. It is shown in the UI as an applied factor.
    - `condition`: use the existing operators. For rules over several fields, combine leaves with `all` / `any` / `not`.
    - `points`: the integer from the request. Set `perOccurrence: true` only if the request says "per claim" or similar, and only on a leaf condition whose field is numeric.
-   - `field` must be an existing request field. If the rule needs data the form doesn't collect, **stop and tell me**: that is a request-schema and form change, not a KB change.
+   - `field` must be an existing request field or a derived postcode field (`postcodeArea`, `postcodeDistrict`). For postcode areas or districts, use `postcodeArea`/`postcodeDistrict` with `in`, not `starts_with` on `postcode` (a prefix "E" also matches "EX4"). If the rule needs data the form doesn't collect, **stop and tell me**: that is a request-schema and form change, not a KB change.
 
 3. **Only if no existing operator can express the rule:** propose the new operator (name and exact semantics) and wait for my OK. Then add it to the KB schema and the operator registry, with table-driven unit tests. Never add factor-specific code.
 

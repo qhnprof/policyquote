@@ -1,10 +1,11 @@
 import { z } from 'zod';
-import { quoteRequestFieldSchema } from '../validation/quote-request.schema';
+import { conditionFieldSchema } from '../validation/quote-request.schema';
 
 /** KB file shapes this backend can interpret. Bump when kb.schema.ts changes incompatibly. */
 export const SUPPORTED_SCHEMA_VERSIONS: readonly number[] = [1];
 
-const field = quoteRequestFieldSchema;
+/** A request field or a derived postcode field (postcodeArea, postcodeDistrict). */
+const field = conditionFieldSchema;
 const scalar = z.union([z.string(), z.number(), z.boolean()]);
 const scalarList = z.array(scalar).min(1);
 const range = { min: z.number(), max: z.number() };

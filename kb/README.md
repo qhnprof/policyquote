@@ -70,7 +70,14 @@ Warnings fail the command only with `--strict` (used by CI and the agent's post-
 
 A leaf compares one request field with fixed values: `{ "field": ..., "operator": ..., <operator keys> }`. Each operator requires exactly its own keys.
 
-`field` must be a request field: `customerName`, `age`, `propertyType`, `propertyValue`, `postcode`, `previousClaims`. Postcodes arrive normalised (uppercase, single space, e.g. `EX4 1AA`).
+`field` must be a request field (`customerName`, `age`, `propertyType`, `propertyValue`, `postcode`, `previousClaims`) or a derived postcode field:
+
+| Derived field | Meaning | `EX4 1AA` | `E1 6AN` |
+| --- | --- | --- | --- |
+| `postcodeArea` | the leading letters | `EX` | `E` |
+| `postcodeDistrict` | the outward code (before the space) | `EX4` | `E1` |
+
+The engine derives them from the normalised postcode (uppercase, single space) in one place (`backend/src/validation/postcode.ts`); they are not form fields or part of the API request. Prefer them to `starts_with` on `postcode` for area rules: a prefix `E` also matches `EX4 1AA`, and `B1` also matches `B10 0AA`, while `postcodeArea in ["E"]` and `postcodeDistrict in ["B1"]` match exactly.
 
 | Operator | Keys | True when |
 | --- | --- | --- |
@@ -117,7 +124,7 @@ Example: add 10 points for coastal postcodes in Cornwall (TR) and Torbay (TQ).
    {
      "id": "coastal_postcode",
      "description": "Coastal postcode area — higher storm exposure",
-     "condition": { "field": "postcode", "operator": "starts_with", "values": ["TR", "TQ"] },
+     "condition": { "field": "postcodeArea", "operator": "in", "values": ["TR", "TQ"] },
      "points": 10
    }
    ```

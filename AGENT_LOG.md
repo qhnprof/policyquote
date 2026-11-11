@@ -312,6 +312,27 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
 
 ---
 
+## Extra E1 — Derived postcode fields (2026-11-11)
+- **Prompt:**
+  > Add derived postcode fields so KB rules can match whole postcode areas and districts exactly instead of using prefixes. Plan first.
+  > - After the request schema normalises the postcode, derive postcodeArea (the leading letters, e.g. "EX" from "EX4 1AA") and postcodeDistrict (the outward code, e.g. "EX4"). Derive them in one place and reuse it everywhere the engine gets input, including the synthetic book. They are not new form fields and not part of the API request.
+  > - Allow KB conditions to use them: update the KB schema's allowed fields, kb/README.md, and the linter's probes if the linter exists.
+  > - Tests: "E1 6AN" → area "E", district "E1"; "EX4 1AA" → area "EX", district "EX4"; a rule on postcodeArea in ["E"] does not match "EX4 1AA"; "B1 1AA" and "B10 0AA" are different districts.
+  > Run typecheck and tests.
+- **Output:**
+  - The plan (with E2) was approved ("go"). I chose E over B+ and downloaded and parsed the data myself, at the user's request.
+  - `validation/postcode.ts`: `derivePostcodeFields()` (the only derivation), `DERIVED_POSTCODE_FIELDS`, `SAMPLE_POSTCODE_FOR` (for linter probes).
+  - `toConditionInput(request)` in `evaluate-condition.ts` is the one place a request becomes engine input; `scoreQuote` calls it, so the handler, the impact preview and the synthetic book all get the derived fields. `ConditionInput` now covers request and derived fields.
+  - KB schema: `field` is `conditionFieldSchema` = request fields + derived fields (both lists come from code, not retyped).
+  - Linter: derived-field literals become sample postcodes (district `EX4` → `EX4 1AA`) and every probe's area and district are derived from its postcode, so the three fields never disagree in a probe.
+  - Docs: kb/README.md (derived-field table, prefix-trap note; the "How to add" example now uses `postcodeArea in ["TR","TQ"]`), CLAUDE.md KB reference, skill step 2.
+  - `.gitignore`: added `data/raw/` and `reports/` before any data was downloaded.
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified:** `npm run typecheck` clean; `npm test` → 144 passed (11 new: the four required cases plus "SW1A"/"M1"/unnormalised input, end-to-end scoring on a district rule, schema accepts derived but rejects unknown fields, linter probes district rules as live and disjoint). `kb:validate -- --strict` on the real KB → 0 warnings, 1 note.
+
+---
+
 ## 01 — <short title> (<date, time>)
 - **Prompt:**
   > _paste the exact prompt_

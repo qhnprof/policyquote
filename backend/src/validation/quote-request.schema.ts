@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DERIVED_POSTCODE_FIELDS } from './postcode';
 
 /** UK postcode without spaces, e.g. "EX41AA", "SW1A1AA", "M11AE". */
 const UK_POSTCODE_COMPACT = /^[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2}$/;
@@ -30,3 +31,8 @@ export type QuoteRequest = z.infer<typeof quoteRequestSchema>;
 export const quoteRequestFieldSchema = quoteRequestSchema.keyof();
 export type QuoteRequestField = z.infer<typeof quoteRequestFieldSchema>;
 export const QUOTE_REQUEST_FIELDS = quoteRequestFieldSchema.options;
+
+/** Fields a KB condition may read: the request fields plus the derived postcode fields. */
+export const conditionFieldSchema = z.enum([...QUOTE_REQUEST_FIELDS, ...DERIVED_POSTCODE_FIELDS]);
+export type ConditionField = z.infer<typeof conditionFieldSchema>;
+export const CONDITION_FIELDS = conditionFieldSchema.options;

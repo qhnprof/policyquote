@@ -45,6 +45,7 @@ Home-insurance quoting app. An Angular frontend calls a Node Lambda-style backen
 ## KB quick reference
 - Factor: `{ id, description, condition, points, perOccurrence? }`. `description` is customer-facing (shown in the UI).
 - Condition: a leaf `{ field, operator, value | values | min+max }`, or a combinator `{ all: [...] }`, `{ any: [...] }`, `{ not: {...} }`.
+- `field` is a request field or a derived postcode field (`postcodeArea` e.g. "EX", `postcodeDistrict` e.g. "EX4", derived only in `validation/postcode.ts`). Use them with `in` for area rules, not `starts_with` on `postcode` (prefix "E" also matches "EX4").
 - `perOccurrence: true` means points × the numeric value of the condition's field (leaf conditions only).
 - Band: `{ min, max, multiplier, summary }`. Bounds are inclusive integers (scores are integer sums); bands start at 0 with no gaps or overlaps. A score above the top band's `max` goes in the top band (the band with the highest `min`, never chosen by name). `summary` is customer-facing.
 - Pricing: `annualPremium = basePremium × band.multiplier × coverageLoadFactor`, rounded to 2 dp; `monthlyPremium = annualPremium / 12`, rounded to 2 dp.

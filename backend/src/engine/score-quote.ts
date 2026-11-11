@@ -1,7 +1,7 @@
 import type { Factor, KnowledgeBase, RiskBand } from '../kb/kb.schema';
 import type { AppliedFactor, QuoteResult } from '../types';
 import type { QuoteRequest } from '../validation/quote-request.schema';
-import { evaluateCondition, type ConditionInput } from './evaluate-condition';
+import { evaluateCondition, toConditionInput, type ConditionInput } from './evaluate-condition';
 
 const NO_FACTORS_TEXT = 'No additional risk factors.';
 const MONTHS_PER_YEAR = 12;
@@ -71,7 +71,7 @@ export function assessRisk(input: ConditionInput, kb: KnowledgeBase): RiskAssess
 
 /** Pure scoring and pricing. Every number, band and rule comes from the KB. */
 export function scoreQuote(input: QuoteRequest, kb: KnowledgeBase): QuoteResult {
-  const { appliedFactors, riskScore } = assessRisk(input, kb);
+  const { appliedFactors, riskScore } = assessRisk(toConditionInput(input), kb);
   const { name: riskBand, band } = resolveBand(riskScore, kb);
 
   const annualPremium = roundToPence(kb.basePremium * band.multiplier * kb.coverageLoadFactor);

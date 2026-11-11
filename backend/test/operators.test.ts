@@ -1,4 +1,4 @@
-import { evaluateCondition } from '../src/engine/evaluate-condition';
+import { evaluateCondition, toConditionInput } from '../src/engine/evaluate-condition';
 import { applyOperator, operators } from '../src/engine/operators';
 import { OPERATOR_NAMES, type Condition, type LeafCondition } from '../src/kb/kb.schema';
 import type { QuoteRequest } from '../src/validation/quote-request.schema';
@@ -77,6 +77,8 @@ describe('evaluateCondition', () => {
   const isHouse: Condition = { field: 'propertyType', operator: 'eq', value: 'House' };
   const highValue: Condition = { field: 'propertyValue', operator: 'gt', value: 500000 };
 
+  const conditionInput = toConditionInput(input);
+
   it.each<[string, Condition, boolean]>([
     ['leaf true', isFlat, true],
     ['leaf false', isHouse, false],
@@ -88,6 +90,6 @@ describe('evaluateCondition', () => {
     ['nested: not(any(house, all(flat, not(high value))))', { not: { any: [isHouse, { all: [isFlat, { not: highValue }] }] } }, true],
     ['nested: all(any(house, flat), not(not(high value)))', { all: [{ any: [isHouse, isFlat] }, { not: { not: highValue } }] }, true],
   ])('%s', (_label, condition, expected) => {
-    expect(evaluateCondition(condition, input)).toBe(expected);
+    expect(evaluateCondition(condition, conditionInput)).toBe(expected);
   });
 });
