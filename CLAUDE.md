@@ -17,7 +17,7 @@ Home-insurance quoting app. An Angular frontend calls a Node Lambda-style backen
 - `backend/src/validation/quote-request.schema.ts`: Zod request schema.
 - `backend/src/kb/`: `kb.schema.ts` (Zod schema + inferred types), `kb-loader.ts` (read, validate, cache), `validate-kb.ts` (CLI).
 - `backend/src/engine/`: `operators.ts` (operator registry), `evaluate-condition.ts` (leaf + all/any/not), `score-quote.ts` (pure scoring + pricing).
-- `backend/test/`: Jest tests. `backend/test/helpers.ts`: `loadRealKb()`, `loadFixtureKb(name)`, `restoreRealKb()`. `backend/test/fixtures/`: small KBs used by tests.
+- `backend/test/`: Jest tests. `backend/test/helpers.ts`: `loadRealKb()`, `loadFixtureKb(name)`, `restoreRealKb()`. `backend/test/fixtures/`: small KBs used by tests. `fixtures/kb-reference.json` is a frozen copy of the KB for engine and tool tests: never update it to match `kb/risk-kb.json`. Only rule tests (`score-quote.test.ts` and the per-factor files) load the real KB.
 - `frontend/src/app/`: Angular standalone app (`models/`, `services/`, `components/`).
 
 ## Commands

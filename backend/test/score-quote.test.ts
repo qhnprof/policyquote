@@ -16,7 +16,8 @@ const request = (overrides: Partial<QuoteRequest>): QuoteRequest => ({
 });
 
 describe('scoreQuote with the real KB', () => {
-  // Expected values were checked by hand against kb/risk-kb.json. If a row fails, fix the code.
+  // Expected values were checked by hand against kb/risk-kb.json. If a row fails after a code change, fix the code.
+  // After a KB change, work the row out again by hand from the new KB and update it.
   it.each<[string, number, QuoteRequest['propertyType'], number, number, number, string, number, number]>([
     ['standard', 40, 'House', 300000, 0, 0, 'STANDARD', 360, 30],
     ['standard boundary', 40, 'House', 800000, 0, 25, 'STANDARD', 360, 30],

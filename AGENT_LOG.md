@@ -1,9 +1,9 @@
 # AGENT_LOG
 
-**Agents:** Claude Code for the build; Claude (chat) for planning (entry 00) and the final review (entry 19). **Project instructions:** [`CLAUDE.md`](CLAUDE.md). **Project skill:** [`.claude/skills/add-risk-factor/SKILL.md`](.claude/skills/add-risk-factor/SKILL.md).
+**Agents:** Claude Code for the build; Claude (chat) for planning (entry 00), the final review (entry 19) and re-running the agent's checks on a copy of the repo (entries 09 and 09b). **Project instructions:** [`CLAUDE.md`](CLAUDE.md). **Project skill:** [`.claude/skills/add-risk-factor/SKILL.md`](.claude/skills/add-risk-factor/SKILL.md).
 
-Each entry follows: prompt → output → what I accepted, changed or rejected → why → how it was verified. **Output** and **Verified** describe what the agent did and reported, unless a line says I did it. "The guide" is the step-by-step plan with prompts from entry 00.
-Steps 04–08 ran in one continuous Claude Code session (no `/clear` between them), so the agent also had the earlier conversation in context. Step 09 (the skill rehearsal) runs in a fresh context (`/clear`), because it tests that the skill works from the files alone.
+Each entry follows: prompt → output → what I accepted, changed or rejected → why → how it was verified. **Output** and **Verified** describe what the agent did and reported, unless a line says otherwise. "The guide" is the step-by-step plan with prompts from entry 00.
+Steps 04–08 ran in one continuous Claude Code session (no `/clear` between them), so the agent also had the earlier conversation in context. Entries are in step order. Steps 09 and 09b ran last, each in a fresh context (`/clear`) in a session opened in `policyquote/`; step 09 tests that the skill works from the files alone.
 
 ---
 
@@ -156,10 +156,61 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
 
 ---
 
-## 09 — Skill rehearsal (not yet run)
-- **Prompt:** in a fresh Claude Code session opened in `policyquote/`: `/clear`, then `/add-risk-factor Flood zone: +15 points if the postcode starts with EX or PL`. Then `git stash -u`, so the submitted KB doesn't contain it (the panel picks the live factor on the day).
-- **Status:** not yet run. The build session was started in the parent `aig/` folder, so it never loaded `policyquote/.claude/` (the skill and the hook), and this rehearsal needs a fresh context anyway.
-- **Output / accepted / why / verified:** _<fill in after the run: did only kb/risk-kb.json and one test file change? did it use `postcodeArea in ["EX","PL"]` rather than `starts_with`? version bump? `kb:impact` summary?>_
+## 09 — Skill rehearsal (2026-11-11)
+- **Prompt:** in a Claude Code session opened in `policyquote/`, so it loaded the project's skill and hook: `/clear`, then `/add-risk-factor Flood zone: +15 points if the postcode starts with EX or PL` (the brief's own example).
+- **Output:**
+  - A KB-only change, with no code changed: one new factor, and the version bumped 1.1.1 → 1.2.0 (minor, because a factor was added):
+    `{ "id": "flood_zone_postcode", "description": "Postcode area EX or PL — higher flood risk", "condition": { "field": "postcodeArea", "operator": "in", "values": ["EX", "PL"] }, "points": 15 }`
+  - It stated its assumption: "starts with EX or PL" means the postcode area, matched exactly. A plain prefix check on the postcode is the trap that lets "E" match "EX4". No other UK area starts with EX or PL, so the result is the same today.
+  - A new test file, `backend/test/flood_zone_postcode.test.ts`, on the real KB. The factor applies to EX4 1AA and PL1 1AA (score 15, STANDARD, £360), to lower-case `pl4 6aa`, and to EX4 1AA with an £800,000 house (score 25 → 40, STANDARD → ELEVATED, £540). It doesn't apply to SW1A 1AA, E1 6AN (the "E" trap), TQ1 1AA (a neighbouring Devon area) or PO1 1AA (same first letter as PL).
+  - The hook ran the checks after the KB edit, and three existing tests failed. They had assumed the shipped KB would never change:
+    - `postcode.test.ts` (EX4 district) and `flood.test.ts` ("applies by postcode district") added their own EX4 rule to the real KB and expected it to be the only one that applied. They now start from the real KB with its factors removed (bands kept), so the expected lists are unchanged.
+    - `flood.test.ts` (two version tests) expected "the real KB's version plus one minor bump", which breaks on every release. They now use a fixed base version, 2.3.4, and expect 2.4.0 and 2.5.0.
+  - `kb:validate -- --strict`: v1.2.0 valid, 7 factors, 0 warnings (the one stacking note was already there). Typecheck clean. `npm test`: 10 suites, 163 passed.
+  - `kb:impact` on the 1,000 synthetic customers: 46 moved up a band (4.6%: 40 STANDARD → ELEVATED, 6 ELEVATED → HIGH_RISK), none down; +£8.71 per customer on average, +£8,712 in total (+2.13%). The biggest movers were +£252 (ELEVATED → HIGH_RISK), e.g. customer 0536 (Flat, £555k, EX4, 1 claim).
+  - A warning: this factor isn't in the flood proposals' group, so if a data-driven district rule from Extra E2 were added later, an EX4 home would get both loadings (+15 and +25). It left the factor out of that group on purpose, because applying the next proposal would silently remove it, and left the choice between the two approaches to me.
+  - Its takeaway: tests of the engine and tools should build their own KB, and only rule tests should load the shipped one.
+- **Accepted / changed / rejected:**
+  - Accepted the factor, its test file and the reading of "starts with" as the postcode area.
+  - Accepted the three test fixes and committed them on their own (0dccd12, "test: flood and postcode tests no longer depend on the shipped KB"). Then `git stash -u` removed the factor and its test, so the submitted KB stays at v1.1.1 and the panel's factor on the day is new.
+  - Followed up on the takeaway in entry 09b.
+- **Why:** The skill did what the live demo needs, from the files alone: one KB entry, its own test, a version bump and an impact summary, with no code change. The three failures were faults in old tests, not in the factor, and it's better to find them in a rehearsal than in the live review. On the overlap warning, in production I'd keep only one of the two flood approaches: a fixed area loading or the data-driven district rules.
+- **Verified:**
+  - By the agent: the strict validation, typecheck and test results above.
+  - By Claude (chat), on a copy of the repo: the two fixed test files pass with the old KB (155 tests) and with the new factor (163). With the factor's KB running, the Coastal home card (45, house in Plymouth worth £380,000, 1 claim) moved from STANDARD £30.00 to ELEVATED £45.00 a month. Clicking it showed score 30 with both factors listed ("1–2 previous claims" and the flood factor). The other three cards were unchanged, and the console showed no errors.
+  - By Claude (chat), in my working copy after the stash: the KB is v1.1.1 again and the factor's test file is gone.
+
+---
+
+## 09b — Tool tests no longer depend on the shipped KB (2026-11-11)
+- **Prompt:** after step 09, Claude (chat) tried the brief's other two kinds of KB change on a copy of the repo ("claims penalty from 15 → 20 points" and removing a factor), plus new factors that stack with existing ones. Four more tests failed in the same way. In a fresh context (`/clear`), with prompts drafted with Claude (chat):
+  > The step 09 rehearsal showed tests that depend on what the shipped KB happens to contain, so a KB-only change made unrelated tests fail. flood.test.ts and postcode.test.ts are already fixed. These still fail when the KB changes in the brief's other two ways (claims from 15 to 20 points, or removing a factor):
+  > - impact.test.ts: "counts a points increase as moving customers up, with matching premium totals"
+  > - impact.test.ts: "reports added, removed, points, condition and other changes by id"
+  > - lint-kb.test.ts: "the real KB has no warnings and one stacking note"
+  > - handler.test.ts: "200: returns a full quote for a valid request" (when a new rule matches its customer)
+  >
+  > Plan first. Add test/fixtures/kb-reference.json, a frozen copy of today's kb/risk-kb.json, and point these tests at it with loadFixtureKb (with afterEach(restoreRealKb)). Keep a separate test that the real KB has no lint warnings. Rule tests (score-quote.test.ts and the per-factor test files) keep using the real KB, because a rule change is supposed to change them. Don't change anything in src/ or kb/. Run typecheck and npm test, and show git diff --stat.
+
+  After the plan:
+  > Go ahead, with the rehearsal. Order: make the edits, run typecheck and npm test, then commit with "test: tool tests use a frozen reference KB, so KB changes only touch rule tests". Then rehearse in a throwaway worktree created from that commit, one change at a time: (1) previous_claims_low from 15 to 20 points, (2) remove property_type_flat, (3) add a factor propertyValue gt 1000000, +30. After each, run npm test and list which tests fail. Only score-quote.test.ts may fail. Finish with git worktree remove, and confirm git status is clean.
+- **Output:**
+  - A plan first, with nothing edited. Its reasoning: these tests check engine behaviour (diffing, linting, the HTTP shape), so expected values like `from: 15`, `'property_type_flat'` and `riskScore: 0` are facts about one particular KB, and a frozen fixture makes that explicit. Rule tests are the opposite: they should go red when a rule changes, because that proves a KB-only change took effect. It also pointed out that a green run proves nothing yet, because the fixture equals the real KB today, and offered the worktree rehearsal.
+  - `backend/test/fixtures/kb-reference.json`: a byte-for-byte copy of today's KB (v1.1.1, checked with `cmp`).
+  - `impact.test.ts`: the points-increase test and the diff test use `loadFixtureKb('kb-reference')`.
+  - `lint-kb.test.ts`: split in two. "The real KB has no lint warnings" stays on the real KB; "the reference KB has no warnings and one stacking note" uses the fixture.
+  - `handler.test.ts`: the 200 test uses the fixture and expects the fixture's `kbVersion`, so a version bump can't break it.
+  - Commit 6c8d139, "test: tool tests use a frozen reference KB, so KB changes only touch rule tests": 4 files, 89 insertions, 7 deletions, nothing in `src/` or `kb/`.
+  - The rehearsal, in a separate worktree, one change at a time: claims 15 → 20 failed 1 test, removing `property_type_flat` failed 5, and the £1m factor failed none. It added a fourth change, "House +5", which failed 7. Every failure was in `score-quote.test.ts`.
+  - Its notes: four tests still read the real KB. None failed in the rehearsal, but two of them (the lint "unreachable band" test and the `kb.schema.test.ts` cross-checks) use the band names, so they would break if a band were renamed. And a new factor that matches no rule-test customer, like the £1m one, passes everything, so a green suite doesn't prove a new factor works. That's why every KB change ships with its own test.
+- **Accepted / changed / rejected:**
+  - Accepted the plan and the commit. The rehearsal prompt added the £1m factor, because it stacks with an existing factor, which is the kind of change that broke the lint test before.
+  - Left the band-name tests on the real KB, as the agent proposed. Renaming a band changes the band names the API returns, so a test should fail then.
+  - Changed afterwards, drafted by Claude (chat): one line in the `CLAUDE.md` map saying that `kb-reference.json` is frozen and is never updated to match the KB. Otherwise a later session could update it along with a KB change and tie the tool tests to the shipped KB again. Also the comment above the `score-quote.test.ts` table, which said "If a row fails, fix the code": after a KB change the row is what needs updating, not the code.
+- **Why:** The panel picks the change in the live review. Before this, a claims change or a removed factor would have broken tests of the impact tool, the linter and the handler, and I'd have had to fix unrelated tests live. Now a KB change can only fail the tests whose job is to check the rules: the `score-quote.test.ts` table, which pins example prices worked out by hand from the KB, and the per-factor test files.
+- **Verified:**
+  - By the agent: typecheck clean; `npm test` → 9 suites, 156 passed (one more than before, from the lint split); the rehearsal above; `git status` clean after removing the worktree.
+  - By Claude (chat), on a copy at 6c8d139: 156 passed. Then ten KB changes, one at a time, each passing strict validation. Only `score-quote.test.ts` ever failed: claims 15 → 20 (1 test), removing `property_type_flat` (5), House +5 (7), a flat with a claim +15 (1), London areas +10 (9), the ELEVATED multiplier 1.5 → 1.6 (3) and the base premium £300 → £320 (6). The £1m factor, an "aged 80 or over" factor and the step 09 flood factor passed all 156.
 
 ---
 
@@ -275,10 +326,11 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
   - `check-kb.js`: compares paths after `path.resolve` (case-insensitive on Windows, either slash, relative paths allowed). A payload it can't parse exits 0, so the hook never blocks the agent because of its own bug. Falls back to the script's location if `CLAUDE_PROJECT_DIR` is unset. 120 s timeout.
   - CLAUDE.md "How to work": one line saying the hook exists and that a reported failure must be fixed or reverted first.
   - The agent's first broken-KB pipe test wrongly passed (exit 0): its bash-built payload had invalid JSON escapes, so the hook took its "can't parse → don't block" branch. Rebuilt the payloads with `JSON.stringify` in a small harness.
-- **Accepted / changed / rejected:** Accepted. The live check runs with the step 09 rehearsal, in a session opened in `policyquote/`.
+- **Accepted / changed / rejected:** Accepted. The live check ran later, in a session opened in `policyquote/` (below).
 - **Why:** The hook turns a broken KB into immediate feedback for the agent instead of a red build later. Exiting 0 on a payload it can't parse means the hook can never block work because of its own bug.
 - **Verified:** pipe tests with real payloads → other file: exit 0 (0.3 s); valid KB: exit 0 (5.8 s); KB with `"greater"`: exit 2 with the validation error on stderr, for backslash, forward-slash and relative paths; KB restored (`git diff` empty). The exact settings command run through bash → exit 0.
-- **Still to do (live check):** this build session was started in the parent `aig/` folder, so Claude Code didn't load `policyquote/.claude/` (that's also why `/add-risk-factor` didn't appear). In a session opened in `policyquote/`: run `/hooks` to confirm the hook is listed, then ask: *"To test the hook, change the operator of property_value_high in kb/risk-kb.json to "greater"."* Record that exchange here (the hook's message and Claude reverting the KB).
+- **Live check (2026-11-11, before step 09):** the build session had been started in the parent `aig/` folder, so it never loaded `policyquote/.claude/` (the hook and the skill). In a new session opened in `policyquote/`, `/hooks` listed the project hook (`node "$CLAUDE_PROJECT_DIR/.claude/hooks/check-kb…"` on `Edit|Write`), and `/add-risk-factor` was in the command list. I asked: *"To test the hook, change the operator of property_value_high in kb/risk-kb.json to "greater"."* The agent made the edit, the hook's `kb:validate --strict` failed on it, and the agent reverted the edit on its own. The check then passed, and `git diff --stat` was empty.
+  - My first attempt taught me something: I made the "greater" edit by hand in the editor, and nothing happened, because the hook only runs on the agent's own Edit and Write tools. The running API caught it instead: on restart it refused to load the KB (`factors[4].condition.operator: Unknown operator "greater". Expected one of: eq, neq, …`), and I undid the edit. So the hook guards the agent's edits, and for hand edits the API's fail-fast load and the strict KB check in CI are the safety net.
 
 ---
 
@@ -328,7 +380,7 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
   - Specs: new `example-profiles` spec (parallel requests + placeholders, 4 cards + headline, a failed card hidden, click emits). The `quote-page` spec now answers the 4 example requests on create (otherwise they collide with `expectOne` and `verify()`), plus a "card fills the form and shows the quote" test.
 - **Accepted / changed / rejected:** Accepted as is.
 - **Why:** The prices come live from the API and are never hard-coded in the UI, so the cards stay correct when the KB changes. The agent dropped its own `queueMicrotask` workaround for a simpler constant.
-- **Verified:** `npm run build` clean; `ng test` → 23 passed (5 new). In Chrome against the live backend (KB v1.1.1): First-time buyer ELEVATED £45.00 · Family home STANDARD £30.00 · City flat HIGH RISK £66.00 · Coastal home STANDARD £30.00; headline "Home insurance from £30.00 a month". Clicking City flat → form filled (Chris Lee, 35, Flat, £900,000) and the result HIGH RISK £66.00/mo, £792.00/yr, score 70. At 600px (measured in a same-origin iframe, because the window wouldn't resize): 2 card columns, form and result stacked, no horizontal scroll. A grep of non-spec frontend source finds no prices, only property values. The "jumps to ELEVATED with the flood rule" check is part of the step 09 rehearsal.
+- **Verified:** `npm run build` clean; `ng test` → 23 passed (5 new). In Chrome against the live backend (KB v1.1.1): First-time buyer ELEVATED £45.00 · Family home STANDARD £30.00 · City flat HIGH RISK £66.00 · Coastal home STANDARD £30.00; headline "Home insurance from £30.00 a month". Clicking City flat → form filled (Chris Lee, 35, Flat, £900,000) and the result HIGH RISK £66.00/mo, £792.00/yr, score 70. At 600px (measured in a same-origin iframe, because the window wouldn't resize): 2 card columns, form and result stacked, no horizontal scroll. A grep of non-spec frontend source finds no prices, only property values. With the step 09 flood factor, the Coastal home card moves to ELEVATED £45.00 (checked on a copy; entry 09).
 
 ---
 
@@ -427,15 +479,16 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
 ---
 
 ## 19 — Final review and write-up with Claude (chat) (2026-11-11)
-- **Prompt:** "review all … and make sure it's ready for submission", then "can you help me to complete these tasks?", then a proofread of this log for unclear, inconsistent or out-of-date lines.
+- **Prompt:** "review all … and make sure it's ready for submission", then "can you help me to complete these tasks?", then a proofread of this log for unclear, inconsistent or out-of-date lines. Later, the agent's step 09 and 09b reports, to check and write up.
 - **Output:**
   - A review against the brief, on a copy of the repo: backend typecheck clean, strict KB validation clean, 155 tests passed, build OK; frontend build OK, 23 tests passed; the live API gave the expected bands; the hook script let a valid KB through and blocked a broken one (exit 2).
   - A cold page load in a headless browser: no console errors or warnings (only the dev server's info messages) and no failed requests; the example cards and a normal quote loaded.
   - Still open at that point: SOLUTION.md, the "Accepted / Why" write-up, step 09, and the claims label, which had lost the brief's "in last 5 years" (entry 12).
-  - Drafts, from this log and the build session's notes: the "Accepted / Why" lines for entries 01–18 (all except 09) and SOLUTION.md.
+  - Drafts, from this log and the build session's notes: the "Accepted / Why" lines for entries 01–18 (all except 09) and SOLUTION.md. Later, entries 09 and 09b and the Extra A live check, from the agent's reports.
   - Proofread: one voice throughout ("I" is me, "the agent" is Claude Code), "the guide" defined in entry 00, and open items pointed to where they were closed. No entry was removed.
+  - Checks on a copy after step 09: the brief's other kinds of KB change broke four more tests that depended on the shipped KB, which led to entry 09b. After 09b, ten KB changes failed only `score-quote.test.ts`. The Coastal card check with the flood factor is in entry 09.
 - **Accepted / changed / rejected:**
   - Changed: the claims label now reads "Claims in the last 5 years" (it was "Previous claims"), reversing the step 12 decision.
-  - The drafts only write up decisions made during the build. Before committing I checked every drafted line, and SOLUTION.md, against what I actually did.
+  - The drafts only write up what happened during the build. The few edits Claude (chat) made are marked where they happened: the label here, and two small edits in entry 09b. Before committing I checked every drafted line, and SOLUTION.md, against what I actually did.
 - **Why:** the brief defines the field as the "number of previous claims in last 5 years", so the label has to say it.
 - **Verified:** after the label fix, `ng build` clean and `ng test --watch=false` → 23 passed (on the copy). SOLUTION.md is under 300 words: `(Get-Content SOLUTION.md | Measure-Object -Word).Words`.
