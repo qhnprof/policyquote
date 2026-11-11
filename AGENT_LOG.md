@@ -25,6 +25,19 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
 
 ---
 
+## 01–03 — Setup: tools, repo, starter (2026-11-11)
+- **Prompt:** the guide's setup steps (install Node 24 LTS, check Docker, create the public `policyquote` repo without README/.gitignore, clone it, unzip the starter, read `CLAUDE.md` and the skill and reword what I disagree with, `npm install` in `backend/`).
+- **Output:**
+  - Node upgraded 24.13.0 → 24.22.2 from the official MSI (SHA-256 checked against nodejs.org's SHASUMS256); Docker Desktop already running (29.9.3, hello-world OK).
+  - Public repo created with `gh`, cloned; starter unzipped (10 files, `CLAUDE.md` at the root).
+  - Review of `CLAUDE.md`/`SKILL.md` and the changes made: see entry 00. Context added: built for AIG (UK), GBP, auditable quotes, no AIG branding.
+  - `npm install` → TypeScript 6.0.3 (ts-jest doesn't support 7); `npm audit --omit=dev` → 0 vulnerabilities (19 in dev-only Jest tooling).
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified:** `node -v` → v24.22.2; `npx tsc --version` → 6.0.3; first commit `9b27e8a` pushed.
+
+---
+
 ## 04 — Shape the knowledge base (2026-11-11)
 - **Prompt:**
   > Read @CLAUDE.md and @kb/risk-kb.json (the example KB from the exercise brief). In this step, only edit the KB and write its documentation. No code.
@@ -140,6 +153,13 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
 - **Verified:**
   - Skill dry run: added a throwaway factor + version bump to `kb/risk-kb.json` → `npm test` 119 passed; reverted, `git diff -- kb/` empty.
   - Live with `npm start`: editing the KB version restarted the server (`/health` 1.1.0 → 1.1.1 → 1.1.0 after revert); a 1.1 MB body → `413 {"error":"PAYLOAD_TOO_LARGE"}`; a normal quote still → STANDARD / 360.
+
+---
+
+## 09 — Skill rehearsal (not yet run)
+- **Prompt:** in a fresh Claude Code session opened in `policyquote/`: `/clear`, then `/add-risk-factor Flood zone: +15 points if the postcode starts with EX or PL`. Then `git stash -u` so the panel's example is new on the day.
+- **Status:** not yet run. The build session was started in the parent `aig/` folder, so it never loaded `policyquote/.claude/` (the skill and the hook), and this rehearsal needs a fresh context anyway.
+- **Output / accepted / why / verified:** _<fill in after the run: did only kb/risk-kb.json and one test file change? did it use `postcodeArea in ["EX","PL"]` rather than `starts_with`? version bump? `kb:impact` summary?>_
 
 ---
 
