@@ -66,6 +66,24 @@ Steps 04–08 ran in one continuous Claude Code session (no `/clear` between the
 
 ---
 
+## 06 — Operators and condition evaluator (2026-11-11)
+- **Prompt:**
+  > Implement the generic condition evaluator. Plan first.
+  > 1. backend/src/engine/operators.ts: an operator registry, meaning an object that maps every operator name in the KB schema to a pure predicate (actualValue, condition) => boolean. eq, neq, in, not_in, gt, gte, lt, lte, between (inclusive), outside_range (below min or above max), starts_with (case-insensitive prefix match against any of values). Numeric operators return false for non-numbers; no type coercion. Type the registry so adding an operator to the schema without implementing it is a compile error (a mapped type over the operator union), and so each implementation gets its own condition shape. No switch statement and no `any`. If TypeScript can't correlate the union at the call site, use one small typed dispatch helper and explain it to me.
+  > 2. backend/src/engine/evaluate-condition.ts: evaluateCondition(condition, input). It is recursive: all → every, any → some, not → negate, leaf → read input[field] and call the registry.
+  > 3. test/operators.test.ts: table-driven tests (it.each) for every operator, including edge values (between at exactly min and max, outside_range at exactly 25 and 75, starts_with with lowercase input), plus nested all/any/not.
+  > Run npm run typecheck and npm test.
+- **Output:**
+  - `operators.ts`: `OperatorRegistry = { [K in OperatorName]: (actual: unknown, c: LeafFor<K>) => boolean }`. Eleven one-line predicates; numeric ones go through `isNumber` (finite numbers only, so `"40"` and `NaN` are false).
+  - Dispatch helper: `dispatch<K>(operator: K, condition: LeafFor<K>, actual)`. With the operator as a type parameter, `operators[operator]` is `OperatorPredicate<K>`, so TypeScript can match it to the condition. Called directly with the `LeafCondition` union, it can't, and rejects the call. No cast, no switch.
+  - `evaluate-condition.ts`: three `in` narrowings (`all` / `any` / `not`) and then the leaf. Input is typed `Readonly<Record<QuoteRequestField, unknown>>`, which a `QuoteRequest` satisfies.
+  - `test/operators.test.ts`: 31 operator rows, 8 no-coercion rows, a registry-covers-schema check, and 9 leaf/combinator cases including two nested three levels deep.
+- **Accepted / changed / rejected:** _<fill in>_
+- **Why:** _<fill in>_
+- **Verified:** `npm run typecheck` clean; `npm test` → 86 passed. Removing `starts_with` from the registry → `TS2741: Property 'starts_with' is missing … in type 'OperatorRegistry'`; restored, clean. A grep for `switch` / `any` in `src/engine` finds only comments.
+
+---
+
 ## 01 — <short title> (<date, time>)
 - **Prompt:**
   > _paste the exact prompt_
