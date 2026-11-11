@@ -5,11 +5,12 @@ import { loadFixtureKb, loadRealKb, restoreRealKb } from './helpers';
 afterEach(restoreRealKb);
 
 describe('real KB (kb/risk-kb.json)', () => {
+  // Deliberately not pinned to a factor count or version: adding a factor must not break this test.
   it('passes validation', () => {
     const kb = loadRealKb();
     expect(kb.schemaVersion).toBe(1);
-    expect(kb.version).toMatch(/^1\.\d+\.\d+$/);
-    expect(kb.factors).toHaveLength(6);
+    expect(kb.version).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(kb.factors.length).toBeGreaterThan(0);
   });
 
   it('is cached per process until the cache is reset', () => {

@@ -51,7 +51,7 @@ describe('handler', () => {
         riskMultiplier: 1,
       },
       appliedFactors: [],
-      kbVersion: '1.1.0',
+      kbVersion: loadRealKb().version,
     });
   });
 

@@ -13,10 +13,11 @@ Home-insurance quoting app. An Angular frontend calls a Node Lambda-style backen
 - `kb/README.md`: schema and operator reference. `kb.schema.ts` must match it.
 - `backend/src/handler.ts`: Lambda entry `handler(event, context)`. HTTP shape + validation only.
 - `backend/src/server.ts`: local HTTP adapter used by `npm start` (also serves `GET /health`).
+- `backend/src/types.ts`: `QuoteResult` (the response shape).
 - `backend/src/validation/quote-request.schema.ts`: Zod request schema.
 - `backend/src/kb/`: `kb.schema.ts` (Zod schema + inferred types), `kb-loader.ts` (read, validate, cache), `validate-kb.ts` (CLI).
 - `backend/src/engine/`: `operators.ts` (operator registry), `evaluate-condition.ts` (leaf + all/any/not), `score-quote.ts` (pure scoring + pricing).
-- `backend/test/`: Jest tests. `backend/test/fixtures/`: small KBs used by tests.
+- `backend/test/`: Jest tests. `backend/test/helpers.ts`: `loadRealKb()`, `loadFixtureKb(name)`, `restoreRealKb()`. `backend/test/fixtures/`: small KBs used by tests.
 - `frontend/src/app/`: Angular standalone app (`models/`, `services/`, `components/`).
 
 ## Commands

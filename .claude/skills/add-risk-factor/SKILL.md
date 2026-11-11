@@ -20,7 +20,7 @@ description: Add, change or remove a risk factor in the PolicyQuote knowledge ba
 
 3. **Only if no existing operator can express the rule:** propose the new operator (name and exact semantics) and wait for my OK. Then add it to the KB schema and the operator registry, with table-driven unit tests. Never add factor-specific code.
 
-4. **Prove it with tests** in `backend/test/`. Load the **real** `kb/risk-kb.json` through `kb-loader`, not a fixture: the test must prove the shipped KB. (Fixtures are for engine and operator tests.)
+4. **Prove it with tests** in a new `backend/test/<factor-id>.test.ts`. Load the **real** `kb/risk-kb.json` with `loadRealKb()` from `test/helpers.ts` (add `afterEach(restoreRealKb)`), not a fixture: the test must prove the shipped KB. Score with `scoreQuote(input, kb)` from `src/engine/score-quote.ts`; see `test/score-quote.test.ts` for the pattern. (Fixtures are for engine and operator tests.)
    - a positive case: an input that triggers the factor. Assert it appears in `appliedFactors` with the right points, plus the expected `riskScore` and `riskBand`.
    - a negative case: a similar input that does not trigger it.
    - for a removal: an input that used to trigger the factor no longer lists it in `appliedFactors`, and the score drops accordingly.

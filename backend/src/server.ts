@@ -22,18 +22,27 @@ function toEventHeaders(headers: IncomingHttpHeaders): QuoteEvent['headers'] {
   return result;
 }
 
+/**
+ * Reads the body as UTF-8. An oversized body is drained (not buffered) and then rejected, so the
+ * client still receives the 413 instead of a connection reset.
+ */
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
-    let body = '';
+    const chunks: string[] = [];
+    let bytes = 0;
+    let tooLarge = false;
     req.setEncoding('utf8');
     req.on('data', (chunk: string) => {
-      body += chunk;
-      if (Buffer.byteLength(body) > MAX_BODY_BYTES) {
-        reject(new BodyTooLargeError());
-        req.destroy();
+      if (tooLarge) return;
+      bytes += Buffer.byteLength(chunk);
+      if (bytes > MAX_BODY_BYTES) {
+        tooLarge = true;
+        chunks.length = 0;
+        return;
       }
+      chunks.push(chunk);
     });
-    req.on('end', () => resolve(body));
+    req.on('end', () => (tooLarge ? reject(new BodyTooLargeError()) : resolve(chunks.join(''))));
     req.on('error', reject);
   });
 }
